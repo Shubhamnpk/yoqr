@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { QRCodeResult, QRTypeInfo } from '@/types/qr-types';
+import { Focus } from 'lucide-react';
 
 // QR Types configuration with regex patterns for detection
 const qrTypes: Record<string, QRTypeInfo> = {
@@ -69,6 +70,7 @@ export default function CameraScanner({
   const [error, setError] = useState<string | null>(null);
   const [hasFlash, setHasFlash] = useState<boolean>(false);
   const [flashOn, setFlashOn] = useState<boolean>(false);
+  const [isActivelyScanning, setIsActivelyScanning] = useState<boolean>(false);
   
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const readerRef = useRef<HTMLDivElement>(null);
@@ -84,9 +86,10 @@ export default function CameraScanner({
 
     // Cleanup on component unmount
     return () => {
-      if (scannerRef.current && isScanning) {
+      if (scannerRef.current && isActivelyScanning) {
         scannerRef.current.stop()
-          .catch(error => console.error("Error stopping scanner:", error));
+          .catch(error => console.error("Error stopping scanner:", error))
+          .finally(() => setIsActivelyScanning(false));
       }
     };
   }, []);
@@ -211,6 +214,9 @@ export default function CameraScanner({
         handleScanFailure
       );
       
+      // Update scanning state after successful start
+      setIsActivelyScanning(true);
+      
       // Check if this device/camera supports flashlight after starting
       await checkFlashSupport();
       
@@ -218,6 +224,7 @@ export default function CameraScanner({
       console.error("Error starting scanner:", error);
       setError(`Failed to start scanner: ${error instanceof Error ? error.message : String(error)}`);
       setIsScanning(false);
+      setIsActivelyScanning(false);
     } finally {
       setLoading(false);
     }
@@ -229,9 +236,15 @@ export default function CameraScanner({
     
     try {
       setLoading(true);
-      await scannerRef.current.stop();
+      // Only attempt to stop if we believe the scanner is running
+      if (isActivelyScanning) {
+        await scannerRef.current.stop();
+        setIsActivelyScanning(false);
+      }
     } catch (error) {
       console.error("Error stopping scanner:", error);
+      // Even if there's an error, we're no longer in scanning state
+      setIsActivelyScanning(false);
     } finally {
       setLoading(false);
     }
@@ -309,7 +322,7 @@ export default function CameraScanner({
       {/* Scanner container */}
       <div 
         className="relative overflow-hidden bg-gray-800/70 rounded-xl"
-        style={{ minHeight: '300px' }}
+        style={{ minHeight: '240px' }}
       >
         {/* Flashlight toggle button - only show when flash is supported and scanning */}
         {isScanning && hasFlash && (
@@ -343,28 +356,42 @@ export default function CameraScanner({
         
         {/* Position guide */}
         {!isScanning && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-medium text-gray-400 bg-gray-900/70 p-3 rounded-lg backdrop-blur-sm z-20">
-            Position QR Code Here
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-medium text-gray-400 p-2 z-20 w-11/12 max-w-xs sm:w-auto">
+            <div className="flex flex-col items-center justify-center p-3 sm:p-4 text-center">
+              <div className="relative mb-2 sm:mb-3">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full opacity-20 blur-xl animate-pulse"></div>
+                <div className="relative">
+                  <Focus className="h-8 w-8 sm:h-10 sm:w-10 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center shadow-md">
+                  <span className="text-white text-xs font-bold">QR</span>
+                </div>
+              </div>
+              <p className="text-base sm:text-lg font-medium mb-1 sm:mb-2">Position QR Code Here</p>
+              <p className="text-xs sm:text-sm max-w-xs text-center text-muted-foreground">
+              Click the Start Scan button to activate the camera
+              </p>
+            </div>
           </div>
         )}
         
         {/* Loading overlay */}
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/70 rounded-xl z-30">
-            <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/70 rounded-lg z-30">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 border-3 sm:border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
           </div>
         )}
       </div>
       
       {/* Error message */}
       {error && (
-        <div className="mt-4 p-3 bg-red-500/20 text-red-200 rounded-lg text-sm">
+        <div className="mt-2 p-2 bg-red-500/20 text-red-200 rounded-lg text-xs sm:text-sm">
           {error}
         </div>
       )}
       
       {/* Camera controls */}
-      <div className="mt-4 space-y-4">
+      <div className="mt-3 space-y-3">
         {/* Camera selector */}
         {availableCameras.length > 1 && (
           <div>
@@ -376,7 +403,7 @@ export default function CameraScanner({
             >
               {availableCameras.map((camera) => (
                 <option key={camera.id} value={camera.id}>
-                  {camera.label || `Camera ${camera.id}`}
+                  {camera.label ? (camera.label.length > 30 ? camera.label.substring(0, 30) + '...' : camera.label) : `Camera ${camera.id}`}
                 </option>
               ))}
             </select>
@@ -386,7 +413,7 @@ export default function CameraScanner({
         {/* Scan control button */}
         <button
           onClick={() => setIsScanning(!isScanning)}
-          className={`w-full flex items-center justify-center py-3 px-6 rounded-lg transition-all duration-200 ${isScanning ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'} text-white shadow-lg`}
+          className={`w-full flex items-center justify-center py-2.5 px-4 rounded-lg transition-all duration-200 ${isScanning ? 'bg-red-500 hover:bg-red-600' : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'} text-white shadow-md text-sm sm:text-base`}
         >
           {isScanning ? (
             <>
@@ -409,7 +436,7 @@ export default function CameraScanner({
   );
 }
 
-// Add scan line animation to global CSS (can be moved to a global CSS file)
+
 // This will be added dynamically in the component and doesn't require a style tag
 if (typeof document !== 'undefined') {
   const styleTag = document.createElement('style');

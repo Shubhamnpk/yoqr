@@ -29,7 +29,7 @@ export default function QRScanner({
   const [scanMode, setScanMode] = useState<'camera' | 'image'>('camera');
 
   return (
-    <div className="bg-slate-900 p-6 rounded-xl shadow-2xl max-w-xl mx-auto border border-slate-800">
+    <div className="bg-card/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 mb-6 border border-border/50">
       {/* Scanner mode toggle - modern pill-shaped toggle */}
       <div className="flex mb-6 bg-slate-800/50 p-1.5 rounded-lg">
         <button

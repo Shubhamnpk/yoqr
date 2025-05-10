@@ -75,7 +75,7 @@ export default function HistoryPanel({
   });
 
   return (
-    <div className="bg-card/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 h-full border border-border/50">
+    <div className="= bg-card/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 h-full border border-border/50">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-primary flex items-center">
           <Clock className="h-5 w-5 mr-2" />

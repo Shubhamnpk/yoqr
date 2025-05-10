@@ -242,18 +242,18 @@ export default function ImageScanner({ onScanSuccess }: ImageScannerProps) {
   };
 
   return (
-    <div className="bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden p-6">
+    <div className="bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden p-4">
       {/* Header with logo */}
-      <div className="flex items-center space-x-2 mb-6">
-        <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-2 rounded-lg shadow-md">
-          <Upload className="h-5 w-5 text-white" />
+      <div className="flex items-center space-x-2 mb-3">
+        <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-1.5 rounded-md shadow-md">
+          <Upload className="h-4 w-4 text-white" />
         </div>
-        <h2 className="text-xl font-bold">Image QR Scanner</h2>
+        <h2 className="text-base font-bold">Image QR Scanner</h2>
       </div>
       
       {/* Scanner area */}
-      <div className="mb-6">
-        <div className="relative w-full aspect-square bg-background/50 rounded-xl border border-border/50 overflow-hidden flex items-center justify-center">
+      <div className="mb-3">
+        <div className="relative w-full aspect-[4/3] bg-background/50 rounded-lg border border-border/50 overflow-hidden flex items-center justify-center">
           {/* Preview image */}
           {previewImage ? (
             <div className="relative w-full h-full">
@@ -265,25 +265,25 @@ export default function ImageScanner({ onScanSuccess }: ImageScannerProps) {
               <div className="absolute inset-0 flex items-center justify-center">
                 {/* Scanning animation overlay */}
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent animate-scan"></div>
-                <div className="absolute top-4 left-4 w-12 h-12 border-l-2 border-t-2 border-purple-500 rounded-tl-md"></div>
-                <div className="absolute top-4 right-4 w-12 h-12 border-r-2 border-t-2 border-purple-500 rounded-tr-md"></div>
-                <div className="absolute bottom-4 left-4 w-12 h-12 border-l-2 border-b-2 border-purple-500 rounded-bl-md"></div>
-                <div className="absolute bottom-4 right-4 w-12 h-12 border-r-2 border-b-2 border-purple-500 rounded-br-md"></div>
+                <div className="absolute top-2 left-2 w-8 h-8 border-l-2 border-t-2 border-purple-500 rounded-tl-md"></div>
+                <div className="absolute top-2 right-2 w-8 h-8 border-r-2 border-t-2 border-purple-500 rounded-tr-md"></div>
+                <div className="absolute bottom-2 left-2 w-8 h-8 border-l-2 border-b-2 border-purple-500 rounded-bl-md"></div>
+                <div className="absolute bottom-2 right-2 w-8 h-8 border-r-2 border-b-2 border-purple-500 rounded-br-md"></div>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center p-6 text-center">
+            <div className="flex flex-col items-center justify-center p-3 text-center">
               <div className="relative mb-4">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full opacity-20 blur-xl animate-pulse"></div>
                 <div className="relative">
-                  <Upload className="h-12 w-12 text-purple-600 dark:text-purple-400" />
+                  <Upload className="h-8 w-8 text-purple-600 dark:text-purple-400" />
                 </div>
-                <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center shadow-md">
+                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center shadow-md">
                   <span className="text-white text-xs font-bold">QR</span>
                 </div>
               </div>
-              <p className="text-xl font-medium mb-2">Upload QR Code Image</p>
-              <p className="text-sm max-w-xs text-center text-muted-foreground">
+              <p className="text-base font-medium mb-1">Upload QR Code Image</p>
+              <p className="text-xs max-w-xs text-center text-muted-foreground">
                 Select an image containing a QR code to scan
               </p>
             </div>
@@ -300,13 +300,13 @@ export default function ImageScanner({ onScanSuccess }: ImageScannerProps) {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full opacity-20 blur-xl animate-pulse"></div>
                 <div className="relative">
-                  <svg className="animate-spin h-16 w-16 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-10 w-10 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 </div>
               </div>
-              <p className="mt-4 text-lg font-medium text-foreground">
+              <p className="mt-2 text-sm font-medium text-foreground">
                 Processing image...
               </p>
             </div>
@@ -315,7 +315,7 @@ export default function ImageScanner({ onScanSuccess }: ImageScannerProps) {
         
         {/* Error message */}
         {error && (
-          <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400 animate-in fade-in duration-300">
+          <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-400 animate-in fade-in duration-300">
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <X className="h-5 w-5 text-red-500" />
@@ -343,7 +343,7 @@ export default function ImageScanner({ onScanSuccess }: ImageScannerProps) {
       <div className="flex justify-center">
         <Button 
           onClick={triggerFileInput}
-          className="w-full py-6 text-lg font-medium bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-xl shadow-lg transition-all duration-300"
+          className="w-full py-3 text-sm font-medium bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-lg shadow-md transition-all duration-300"
           disabled={loading}
         >
           {loading ? (
