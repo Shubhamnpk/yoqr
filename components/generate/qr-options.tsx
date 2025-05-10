@@ -46,70 +46,74 @@ export default function QRCodeOptions({ options, onChange }: QRCodeOptionsProps)
           <CollapsibleContent className="pt-4">
             <CardContent className="pt-2 px-0">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-3 mb-4 bg-background/50 p-1 rounded-xl w-full">
-                  <TabsTrigger 
-                    value="appearance" 
-                    className="flex items-center justify-center data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
-                  >
-                    <Palette className="h-4 w-4 mr-2" />
-                    Appearance
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="size" 
-                    className="flex items-center justify-center data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
-                  >
-                    <Sliders className="h-4 w-4 mr-2" />
-                    Size
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="advanced" 
-                    className="flex items-center justify-center data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-300"
-                  >
-                    <Shield className="h-4 w-4 mr-2" />
-                    Advanced
-                  </TabsTrigger>
-                </TabsList>
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-lg"></div>
+                  <TabsList className="grid grid-cols-3 bg-background/80 backdrop-blur-sm p-1.5 rounded-xl w-full relative z-10 border border-white/20 shadow-lg">
+                    <TabsTrigger 
+                      value="appearance" 
+                      className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg"
+                    >
+                      <Palette className="h-4 w-4 mr-2" />
+                      Appearance
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="size" 
+                      className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg"
+                    >
+                      <Sliders className="h-4 w-4 mr-2" />
+                      Size
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="advanced" 
+                      className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg"
+                    >
+                      <Shield className="h-4 w-4 mr-2" />
+                      Advanced
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
                 
-                <div className="bg-white dark:bg-gray-800/50 rounded-xl p-5 shadow-inner border border-border/20">
+                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/20 dark:border-gray-700/30">
                   <TabsContent value="appearance" className="space-y-6 mt-0">
                     {/* Colors */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-3">
                         <Label htmlFor="fg-color" className="flex items-center text-sm font-medium">
                           <div 
-                            className="w-4 h-4 rounded-full border border-border mr-2" 
+                            className="w-5 h-5 rounded-full mr-2 border border-border/50 shadow-inner" 
                             style={{ backgroundColor: options.foregroundColor }}
                           />
-                          Foreground Color
+                          <span>Foreground Color</span>
                         </Label>
-                        <div className="relative group">
+                        <div className="relative group overflow-hidden rounded-lg shadow-sm border border-border/30 transition-all hover:shadow-md">
+                          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                           <Input
                             id="fg-color"
                             type="color"
                             value={options.foregroundColor}
                             onChange={(e) => onChange({ foregroundColor: e.target.value })}
-                            className="w-full h-10 cursor-pointer rounded-lg border-border/50 transition-all duration-300 focus:ring-2 focus:ring-primary/30"
+                            className="w-full h-12 cursor-pointer border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
-                          <div className="absolute inset-0 pointer-events-none rounded-lg border border-border/0 group-hover:border-primary/20 transition-all duration-300"></div>
                         </div>
                       </div>
-                      <div className="space-y-2">
+                      
+                      <div className="space-y-3">
                         <Label htmlFor="bg-color" className="flex items-center text-sm font-medium">
                           <div 
-                            className="w-4 h-4 rounded-full border border-border mr-2" 
+                            className="w-5 h-5 rounded-full mr-2 border border-border/50 shadow-inner" 
                             style={{ backgroundColor: options.backgroundColor }}
                           />
-                          Background Color
+                          <span>Background Color</span>
                         </Label>
-                        <div className="relative group">
+                        <div className="relative group overflow-hidden rounded-lg shadow-sm border border-border/30 transition-all hover:shadow-md">
+                          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                           <Input
                             id="bg-color"
                             type="color"
                             value={options.backgroundColor}
                             onChange={(e) => onChange({ backgroundColor: e.target.value })}
-                            className="w-full h-10 cursor-pointer rounded-lg border-border/50 transition-all duration-300 focus:ring-2 focus:ring-primary/30"
+                            className="w-full h-12 cursor-pointer border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
-                          <div className="absolute inset-0 pointer-events-none rounded-lg border border-border/0 group-hover:border-primary/20 transition-all duration-300"></div>
                         </div>
                       </div>
                     </div>
@@ -147,34 +151,36 @@ export default function QRCodeOptions({ options, onChange }: QRCodeOptionsProps)
                           <Grid className="h-4 w-4 mr-2" />
                           QR Code Size
                         </Label>
-                        <Badge variant="outline" className="bg-primary/10 text-primary">
+                        <span className="text-sm font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full">
                           {options.size}px
-                        </Badge>
+                        </span>
                       </div>
-                      <Slider
-                        id="size-slider"
-                        min={100}
-                        max={500}
-                        step={10}
-                        value={[options.size]}
-                        onValueChange={(value) => onChange({ size: value[0] })}
-                        className="py-2"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Small</span>
-                        <span>Medium</span>
-                        <span>Large</span>
+                      <div className="px-1">
+                        <Slider
+                          id="size-slider"
+                          min={100}
+                          max={500}
+                          step={10}
+                          value={[options.size]}
+                          onValueChange={(value) => onChange({ size: value[0] })}
+                          className="h-2"
+                        />
                       </div>
                     </div>
                     
                     {/* Size presets */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Size Presets</Label>
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium flex items-center">
+                        <Grid className="h-4 w-4 mr-2 text-blue-500" />
+                        Size Presets
+                      </Label>
                       <div className="flex flex-wrap gap-2">
                         {[100, 200, 300, 400, 500].map((size) => (
                           <button
                             key={size}
-                            className={`px-3 py-1 rounded-lg border transition-all ${options.size === size ? 'bg-primary text-white border-primary' : 'border-border/50 hover:border-primary/50'}`}
+                            className={`px-4 py-2 rounded-lg border transition-all duration-200 ${options.size === size 
+                              ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-500 shadow-md' 
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm'}`}
                             onClick={() => onChange({ size })}
                           >
                             {size}px
@@ -184,15 +190,21 @@ export default function QRCodeOptions({ options, onChange }: QRCodeOptionsProps)
                     </div>
                     
                     {/* Include Margin */}
-                    <div className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
                       <Label htmlFor="include-margin" className="flex items-center text-sm font-medium cursor-pointer">
-                        <Grid className="h-4 w-4 mr-2 text-muted-foreground" />
-                        Include Quiet Zone (Margin)
+                        <div className="bg-blue-500/10 p-2 rounded-lg mr-3">
+                          <Grid className="h-4 w-4 text-blue-500" />
+                        </div>
+                        <div>
+                          <span className="block">Include Quiet Zone</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">Adds margin around the QR code</span>
+                        </div>
                       </Label>
                       <Switch
                         id="include-margin"
                         checked={options.includeMargin}
                         onCheckedChange={(checked) => onChange({ includeMargin: checked })}
+                        className="data-[state=checked]:bg-blue-500"
                       />
                     </div>
                   </TabsContent>

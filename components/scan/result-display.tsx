@@ -37,7 +37,7 @@ export default function ResultDisplay({ result }: ResultDisplayProps) {
 
   if (!result) {
     return (
-      <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border/50 overflow-hidden">
+      <div className="bg-card/80 backdrop-blur-lg rounded-md border border-border/50 overflow-hidden max-w-[95%] mx-auto">
         <div className="flex items-center p-4">
           <div className="qr-type-icon qr-type-text text-muted-foreground bg-muted/30 w-10 h-10 flex items-center justify-center rounded-lg mr-3">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -60,7 +60,7 @@ export default function ResultDisplay({ result }: ResultDisplayProps) {
   const actions = getQRTypeActions(result.type, result.data);
 
   return (
-    <div className="bg-card/80 backdrop-blur-lg rounded-xl border border-border/50 overflow-hidden">
+    <div className="bg-card/80 backdrop-blur-lg rounded-md border border-border/50 overflow-hidden max-w-[95%] mx-auto">
       <div className="flex items-center p-4 border-b border-border/50">
         <div className={`qr-type-icon qr-type-${result.type} w-10 h-10 flex items-center justify-center rounded-lg mr-3`} 
              style={{backgroundColor: `hsla(${getTypeColor(result.type)}, 0.2)`, color: `hsl(${getTypeColor(result.type)})`}}>
