@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import QRScanner from '@/components/scan/qr-scanner';
 import ResultDisplay from '@/components/scan/result-display';
 import HistoryPanel from '@/components/scan/history-panel';
