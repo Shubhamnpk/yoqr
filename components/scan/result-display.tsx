@@ -12,6 +12,17 @@ interface ResultDisplayProps {
   result: QRCodeResult | null;
 }
 
+/**
+  A component that displays the results of a QR code scan.
+ *
+ * @example
+ * import { ResultDisplay } from '@/components/scan/result-display';
+ *
+ * <ResultDisplay result={result} />
+ *
+ * @param {QRCodeResult | null} result - The QR code result to display. If `null`, it
+ *   will display a message indicating that a QR code has not been scanned yet.
+ */
 export default function ResultDisplay({ result }: ResultDisplayProps) {
   // Add custom scrollbar styles
   if (typeof document !== 'undefined') {
@@ -95,30 +106,7 @@ export default function ResultDisplay({ result }: ResultDisplayProps) {
           <h3 className="text-sm text-muted-foreground font-medium">
             {result.type.charAt(0).toUpperCase() + result.type.slice(1)}
           </h3>
-          <div className="text-foreground text-sm font-medium w-full overflow-x-auto whitespace-nowrap custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-            {/* Show beautified data first */}
-            {result.type === 'wifi' ? (
-              <span>
-                SSID: {result.data.match(/S:([^;]+)/i)?.[1] || 'N/A'} 
-                {result.data.match(/P:([^;]+)/i)?.[1] && <span className="opacity-60">(Password protected)</span>}
-              </span>
-            ) : result.type === 'contact' ? (
-              <span>
-                {result.data.match(/FN:([^\r\n]+)/i)?.[1] || 
-                  result.data.match(/N:([^\r\n]+)/i)?.[1] || 'Contact'}
-              </span>
-            ) : result.type === 'email' ? (
-              <span>
-                {result.data.replace('mailto:', '')}
-              </span>
-            ) : result.type === 'calendar' ? (
-              <span>
-                {result.data.match(/SUMMARY:([^\r\n]+)/i)?.[1] || 'Event'}
-              </span>
-            ) : (
-              result.data
-            )}
-          </div>
+          <div className="text-foreground text-sm font-medium w-full overflow-x-auto whitespace-nowrap custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>{result.data}</div>
         </div>
       </div>
       
@@ -172,103 +160,29 @@ export default function ResultDisplay({ result }: ResultDisplayProps) {
         
         {showDetails && (
           <div className="mt-3 bg-muted/30 rounded-lg border border-border/30 text-xs text-foreground">
-            {/* Tabs for processed vs raw data */}
-            <div className="border-b border-border/20">
-              <div className="flex">
-                <button 
-                  onClick={() => setActiveTab('processed')}
-                  className={`px-4 py-2 text-xs transition-colors ${activeTab === 'processed' ? 'border-b-2 border-primary font-medium text-primary' : 'text-muted-foreground hover:text-foreground/70'}`}
-                >
-                  Processed Data
-                </button>
-                <button 
-                  onClick={() => setActiveTab('raw')}
-                  className={`px-4 py-2 text-xs transition-colors ${activeTab === 'raw' ? 'border-b-2 border-primary font-medium text-primary' : 'text-muted-foreground hover:text-foreground/70'}`}
-                >
-                  Raw Data
-                </button>
-              </div>
-            </div>
-
-            {/* Data Section - Processed or Raw based on active tab */}
-            {activeTab === 'processed' ? (
+            {/* For vCard and structured data types */}
+            {result.type === 'contact' ? (
               <div className="overflow-hidden">
-              {result.type === 'wifi' ? (
-                <div className="p-4 space-y-2">
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-1 text-muted-foreground">Network:</div>
-                    <div className="col-span-2 font-medium">{result.data.match(/S:([^;]+)/i)?.[1] || 'N/A'}</div>
-                    
-                    <div className="col-span-1 text-muted-foreground">Password:</div>
-                    <div className="col-span-2 font-medium flex items-center gap-2">
-                      <span>········</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-6 text-xs py-0 px-2 hover:bg-primary/10"
-                        onClick={() => copyToClipboard(result.data.match(/P:([^;]+)/i)?.[1] || '')}
-                      >
-                        Copy
-                      </Button>
-                    </div>
-                    
-                    <div className="col-span-1 text-muted-foreground">Type:</div>
-                    <div className="col-span-2 font-medium">{result.data.match(/T:([^;]+)/i)?.[1] || 'N/A'}</div>
-                    
-                    <div className="col-span-1 text-muted-foreground">Hidden:</div>
-                    <div className="col-span-2 font-medium">{result.data.match(/H:([^;]+)/i)?.[1]?.toLowerCase() === 'true' ? 'Yes' : 'No'}</div>
-                  </div>
+                {formatDetailsContent(result).split('\n').map((line, index) => {
+                  // Parse key-value pairs
+                  const [key, value] = line.includes(':') ? [line.split(':', 1)[0], line.substring(line.indexOf(':') + 1)] : [null, line];
                   
-                  {/* Connect to WiFi button */}
-                  <div className="pt-3 flex justify-center">
-                    <Button 
-                      className="w-full bg-primary hover:bg-primary/90"
-                      onClick={() => {
-                        // On supported devices, this will open the WiFi settings
-                        window.location.href = result.data;
-                      }}
-                    >
-                      <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
-                        <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
-                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
-                        <circle cx="12" cy="20" r="1"/>
-                      </svg>
-                      Connect to Network
-                    </Button>
-                  </div>
-                </div>
-              ) : result.type === 'contact' ? (
-                <div className="overflow-hidden">
-                  {formatDetailsContent(result).split('\n').map((line, index) => {
-                    // Parse key-value pairs
-                    const [key, value] = line.includes(':') ? [line.split(':', 1)[0], line.substring(line.indexOf(':') + 1)] : [null, line];
-                    
-                    if (!key || !value) return null;
-                    
-                    return (
-                      <div key={index} className={`flex border-b border-border/20 ${index % 2 === 0 ? 'bg-muted/10' : ''}`}>
-                          <div className="px-3 py-2 w-1/3 font-medium border-r border-border/20">{key}</div>
-                          <div className="px-3 py-2 w-2/3 overflow-x-auto custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-                            {value}
-                          </div>
+                  if (!key || !value) return null;
+                  
+                  return (
+                    <div key={index} className={`flex border-b border-border/20 ${index % 2 === 0 ? 'bg-muted/10' : ''}`}>
+                      <div className="px-3 py-2 w-1/3 font-medium border-r border-border/20">{key}</div>
+                      <div className="px-3 py-2 w-2/3 overflow-x-auto custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
+                        {value}
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="p-3 max-h-60 overflow-y-auto">
-                  <pre className="whitespace-pre-wrap break-all overflow-x-auto custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
-                    {formatDetailsContent(result)}
-                  </pre>
-                </div>
-              )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
-              <div className="p-3 max-h-60 overflow-y-auto bg-muted/10">
-                <h3 className="font-medium text-xs mb-2 text-muted-foreground">Raw Data:</h3>
-                <pre className="whitespace-pre-wrap break-all overflow-x-auto custom-scrollbar p-2 bg-black/10 rounded" style={{ scrollbarWidth: 'thin' }}>
-                  {result.data}
+              <div className="p-3 max-h-60 overflow-y-auto">
+                <pre className="whitespace-pre-wrap break-all overflow-x-auto custom-scrollbar" style={{ scrollbarWidth: 'thin' }}>
+                  {formatDetailsContent(result)}
                 </pre>
               </div>
             )}
