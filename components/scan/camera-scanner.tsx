@@ -151,35 +151,70 @@ export default function CameraScanner({
         // Format camera labels to be more user-friendly
         const formattedCameras = cameras.map(camera => {
           let label = camera.label || `Camera ${camera.id}`;
+          let cameraType = '';
           
           // Try to detect back/front camera from label
           if (label.toLowerCase().includes('back')) {
             label = 'Back Camera';
+            cameraType = 'environment';
           } else if (label.toLowerCase().includes('front')) {
             label = 'Front Camera';
+            cameraType = 'user';
           } else if (label.toLowerCase().includes('environment')) {
             label = 'Back Camera';
+            cameraType = 'environment';
           } else if (label.toLowerCase().includes('user')) {
             label = 'Front Camera';
+            cameraType = 'user';
           }
           
           return {
             id: camera.id,
-            label
+            label,
+            cameraType
           };
         });
         
         setAvailableCameras(formattedCameras);
         
-        // Select the back camera by default if available
-        const backCamera = formattedCameras.find(camera => 
-          camera.label.toLowerCase().includes('back')
-        );
-        
-        if (backCamera) {
-          setCurrentCamera(backCamera.id);
+        // If currentCamera is a facingMode like 'environment' or 'user', find a matching camera
+        if (currentCamera === 'environment' || currentCamera === 'user') {
+          const matchingCamera = formattedCameras.find(camera => 
+            camera.cameraType === currentCamera
+          );
+          
+          if (matchingCamera) {
+            setCurrentCamera(matchingCamera.id);
+          } else {
+            // Fall back to default camera selection
+            const backCamera = formattedCameras.find(camera => 
+              camera.label.toLowerCase().includes('back')
+            );
+            
+            if (backCamera) {
+              setCurrentCamera(backCamera.id);
+            } else {
+              setCurrentCamera(formattedCameras[0].id);
+            }
+          }
+        } else if (currentCamera === 'auto' || !currentCamera) {
+          // Auto selection - prefer back camera
+          const backCamera = formattedCameras.find(camera => 
+            camera.label.toLowerCase().includes('back')
+          );
+          
+          if (backCamera) {
+            setCurrentCamera(backCamera.id);
+          } else {
+            setCurrentCamera(formattedCameras[0].id);
+          }
         } else {
-          setCurrentCamera(formattedCameras[0].id);
+          // Check if the currentCamera exists in our available cameras
+          const cameraExists = formattedCameras.some(camera => camera.id === currentCamera);
+          if (!cameraExists) {
+            // If not, default to the first camera
+            setCurrentCamera(formattedCameras[0].id);
+          }
         }
       } else {
         setError('No cameras found on your device');

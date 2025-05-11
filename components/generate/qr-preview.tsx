@@ -321,7 +321,7 @@ export default function QRCodePreview({ content, options }: QRCodePreviewProps) 
       <CardFooter className="flex justify-between pt-2 pb-6 px-6">
         <div className="flex items-center text-sm text-muted-foreground">
           <Smartphone className="h-4 w-4 mr-2" />
-          {content ? 'Scan with any QR reader app' : 'No QR code generated yet'}
+          {content ? 'Scan with any QR reader app' : ''}
         </div>
         
         <div className="flex space-x-2">

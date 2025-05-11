@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronUp, Settings, Sliders, Palette, Shield, Grid } from 'lucide-react';
+import { ChevronDown, ChevronUp, Settings, Sliders, Palette, Shield, Grid, Image, X, Upload } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,14 +17,69 @@ import { QRGenerateOptions } from '@/types/qr-types';
 interface QRCodeOptionsProps {
   options: QRGenerateOptions;
   onChange: (options: Partial<QRGenerateOptions>) => void;
+  enabled?: boolean; // Optional flag to enable/disable the entire component
+  onToggle?: (enabled: boolean) => void; // Callback when the component is toggled
 }
 
-export default function QRCodeOptions({ options, onChange }: QRCodeOptionsProps) {
-  const [isOpen, setIsOpen] = useState(true);
+export default function QRCodeOptions({ options, onChange, enabled = true, onToggle }: QRCodeOptionsProps) {
+  // Component is hidden by default and positioned at the bottom with full width
+  const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('appearance');
+  const [logoPreview, setLogoPreview] = useState<string | null>(options.imageSettings?.src || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Handle file upload for logo
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageSrc = event.target?.result as string;
+        setLogoPreview(imageSrc);
+        // Update options with the new logo
+        onChange({
+          imageSettings: {
+            src: imageSrc,
+            height: 30, // Default to 15% of QR code size
+            width: 30,
+            excavate: true,
+          }
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Remove logo
+  const handleRemoveLogo = () => {
+    setLogoPreview(null);
+    onChange({ imageSettings: null });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // If component is disabled, return minimized version with just enable toggle
+  if (!enabled) {
+    return (
+      <Card className="bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center">
+            <Settings className="h-5 w-5 mr-2 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">Enable Customization</span>
+          </div>
+          <Switch
+            checked={false}
+            onCheckedChange={() => onToggle?.(true)}
+            className="data-[state=checked]:bg-blue-500"
+          />
+        </div>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden">
+    <Card className="bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden w-full mt-auto fixed bottom-0 left-0 right-0 z-10">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600"></div>
       <CardHeader className="pb-2">
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -33,6 +89,13 @@ export default function QRCodeOptions({ options, onChange }: QRCodeOptionsProps)
               <CardTitle className="text-xl font-bold">Customization</CardTitle>
             </div>
             <div className="flex items-center space-x-2">
+              {onToggle && (
+                <Switch
+                  checked={enabled}
+                  onCheckedChange={onToggle}
+                  className="data-[state=checked]:bg-blue-500 mr-2"
+                />
+              )}
               <Badge variant="outline" className="bg-primary/10 text-primary px-3 py-1 text-xs">
                 {options.size}px
               </Badge>
@@ -48,7 +111,7 @@ export default function QRCodeOptions({ options, onChange }: QRCodeOptionsProps)
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="relative mb-6">
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-lg"></div>
-                  <TabsList className="grid grid-cols-3 bg-background/80 backdrop-blur-sm p-1.5 rounded-xl w-full relative z-10 border border-white/20 shadow-lg">
+                  <TabsList className="grid grid-cols-4 bg-background/80 backdrop-blur-sm p-1.5 rounded-xl w-full relative z-10 border border-white/20 shadow-lg">
                     <TabsTrigger 
                       value="appearance" 
                       className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg"
@@ -69,6 +132,13 @@ export default function QRCodeOptions({ options, onChange }: QRCodeOptionsProps)
                     >
                       <Shield className="h-4 w-4 mr-2" />
                       Advanced
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="logo" 
+                      className="flex items-center justify-center data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg"
+                    >
+                      <Image className="h-4 w-4 mr-2" />
+                      Logo
                     </TabsTrigger>
                   </TabsList>
                 </div>
@@ -243,6 +313,142 @@ export default function QRCodeOptions({ options, onChange }: QRCodeOptionsProps)
                       <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                         Error correction allows a QR code to be read even when partially damaged or obscured.
                         Higher levels provide more redundancy but create larger codes.
+                      </p>
+                    </div>
+                  </TabsContent>
+
+                  {/* Logo Tab Content */}
+                  <TabsContent value="logo" className="space-y-6 mt-0">
+                    <div className="space-y-4">
+                      {/* Logo upload section */}
+                      <div className="bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm p-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <Label className="text-sm font-medium flex items-center">
+                            <Image className="h-4 w-4 mr-2 text-blue-500" />
+                            Add Logo or Image
+                          </Label>
+                          <div className="flex items-center">
+                            <Switch
+                              checked={!!logoPreview}
+                              onCheckedChange={(checked) => {
+                                if (!checked) {
+                                  handleRemoveLogo();
+                                } else if (fileInputRef.current) {
+                                  fileInputRef.current.click();
+                                }
+                              }}
+                              className="data-[state=checked]:bg-blue-500"
+                            />
+                          </div>
+                        </div>
+                        
+                        {/* Logo preview */}
+                        {logoPreview ? (
+                          <div className="relative bg-slate-100 dark:bg-slate-800/50 rounded-lg p-2 h-32 flex items-center justify-center">
+                            <img 
+                              src={logoPreview} 
+                              alt="Logo preview" 
+                              className="max-h-full max-w-full object-contain" 
+                            />
+                            <button 
+                              onClick={handleRemoveLogo}
+                              className="absolute top-2 right-2 bg-red-500/90 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                              aria-label="Remove logo"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div 
+                            className="bg-slate-100 dark:bg-slate-800/50 rounded-lg p-4 flex flex-col items-center justify-center h-32 border-2 border-dashed border-slate-300 dark:border-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700/50 transition-colors"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <Upload className="h-8 w-8 text-slate-400 mb-2" />
+                            <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
+                              Click to upload a logo or image for your QR code
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Hidden file input */}
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleLogoUpload}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                      </div>
+                      
+                      {/* Logo size control */}
+                      {logoPreview && (
+                        <div className="bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/50 p-4 space-y-3">
+                          <Label className="text-sm font-medium">Logo Size (%)</Label>
+                          <Slider
+                            defaultValue={[10]}
+                            min={5}
+                            max={30}
+                            step={1}
+                            value={[options.imageSettings?.height || 10]}
+                            onValueChange={([size]) => {
+                              if (options.imageSettings) {
+                                onChange({
+                                  imageSettings: {
+                                    ...options.imageSettings,
+                                    height: size,
+                                    width: size
+                                  }
+                                });
+                              }
+                            }}
+                            className="my-2"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>5%</span>
+                            <span>30%</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Logo excavate option (clear background) */}
+                      {logoPreview && (
+                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-800/30 rounded-xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm">
+                          <Label htmlFor="excavate-option" className="flex items-center text-sm font-medium cursor-pointer">
+                            <div className="bg-blue-500/10 p-2 rounded-lg mr-3">
+                              <Grid className="h-4 w-4 text-blue-500" />
+                            </div>
+                            <div>
+                              <span className="block">Clear Background</span>
+                              <span className="text-xs text-slate-500 dark:text-slate-400">Makes QR code visible behind logo</span>
+                            </div>
+                          </Label>
+                          <Switch
+                            id="excavate-option"
+                            checked={options.imageSettings?.excavate ?? true}
+                            onCheckedChange={(checked) => {
+                              if (options.imageSettings) {
+                                onChange({
+                                  imageSettings: {
+                                    ...options.imageSettings,
+                                    excavate: checked
+                                  }
+                                });
+                              }
+                            }}
+                            className="data-[state=checked]:bg-blue-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Logo tip */}
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/30">
+                      <h4 className="text-sm font-medium text-blue-700 dark:text-blue-300 flex items-center">
+                        <Shield className="h-4 w-4 mr-2" />
+                        Logo Usage Tips
+                      </h4>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        Adding a logo may reduce QR code readability. Use higher error correction and test your QR code with different scanners.
                       </p>
                     </div>
                   </TabsContent>
