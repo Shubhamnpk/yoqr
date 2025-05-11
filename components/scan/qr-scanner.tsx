@@ -33,40 +33,65 @@ function CameraSelector({ currentCamera, setCurrentCamera }: CameraSelectorProps
     async function detectCameras() {
       try {
         setLoading(true);
-        const cameras = await Html5Qrcode.getCameras();
+        // Check if media devices are supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+          // Silent fail - will just not show camera selector
+          setLoading(false);
+          return;
+        }
         
-        if (cameras && cameras.length > 0) {
-          // Format camera labels to be more user-friendly
-          const formattedCameras = cameras.map(camera => {
-            let label = camera.label || `Camera ${camera.id}`;
-            
-            // Try to detect back/front camera from label
-            if (label.toLowerCase().includes('back')) {
-              label = 'Back Camera';
-            } else if (label.toLowerCase().includes('front')) {
-              label = 'Front Camera';
-            } else if (label.toLowerCase().includes('environment')) {
-              label = 'Back Camera';
-            } else if (label.toLowerCase().includes('user')) {
-              label = 'Front Camera';
-            }
-            
-            return {
-              id: camera.id,
-              label
-            };
-          });
+        // First check if we have permission to access media devices
+        try {
+          // Request a dummy stream just to trigger permissions
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          // Stop all tracks immediately
+          stream.getTracks().forEach(track => track.stop());
           
-          setAvailableCameras(formattedCameras);
+          // Now get the cameras
+          const cameras = await Html5Qrcode.getCameras();
+          
+          if (cameras && cameras.length > 0) {
+            // Format camera labels to be more user-friendly
+            const formattedCameras = cameras.map(camera => {
+              let label = camera.label || `Camera ${camera.id}`;
+              
+              // Try to detect back/front camera from label
+              if (label.toLowerCase().includes('back')) {
+                label = 'Back Camera';
+              } else if (label.toLowerCase().includes('front')) {
+                label = 'Front Camera';
+              } else if (label.toLowerCase().includes('environment')) {
+                label = 'Back Camera';
+              } else if (label.toLowerCase().includes('user')) {
+                label = 'Front Camera';
+              }
+              
+              return {
+                id: camera.id,
+                label
+              };
+            });
+            
+            setAvailableCameras(formattedCameras);
+          }
+        } catch (permissionError) {
+          // User denied camera permission or no camera available
+          // We'll handle this silently and just not show the camera selector
         }
       } catch (error) {
-        console.error("Error detecting cameras:", error);
+        // Silently fail - the component will just not show the camera selector
+        // This is better UX than showing errors in the console
       } finally {
         setLoading(false);
       }
     }
     
-    detectCameras();
+    // Delay camera detection slightly to prevent race conditions
+    const timer = setTimeout(() => {
+      detectCameras();
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, []);
   
   // If no cameras or still loading, don't render anything
@@ -81,10 +106,10 @@ function CameraSelector({ currentCamera, setCurrentCamera }: CameraSelectorProps
   
   return (
     <div className="ml-4 flex items-center space-x-2">
-      <Smartphone className="h-4 w-4 text-slate-400" />
+      <Smartphone className="h-4 w-4 text-muted-foreground" />
       <select
         id="camera-select"
-        className="bg-slate-700 border-none text-xs text-slate-200 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none max-w-[150px] truncate"
+        className="bg-muted border-none text-xs text-primary-foreground rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-primary focus:outline-none max-w-[150px] truncate"
         onChange={(e) => setCurrentCamera(e.target.value)}
         value={currentCamera}
         aria-label="Select camera"
@@ -113,7 +138,7 @@ export default function QRScanner({
   return (
     <div className="bg-card/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 mb-6 border border-border/50">
       {/* Scanner mode toggle - modern pill-shaped toggle */}
-      <div className="flex mb-6 bg-slate-800/50 p-1.5 rounded-lg">
+      <div className="flex mb-6 bg-muted/50 p-1.5 rounded-lg shadow-sm">
         <button
           className={`flex-1 flex items-center justify-center py-3 transition-all duration-200 ${
             scanMode === 'camera' 
@@ -140,20 +165,20 @@ export default function QRScanner({
       </div>
       
       {/* Controls section - modern glassmorphism style */}
-      <div className="bg-slate-800/60 backdrop-blur-sm rounded-xl p-4 mb-6 border border-slate-700/50">
+      <div className="bg-muted/30 backdrop-blur-sm rounded-xl p-4 mb-6 border border-border/40 shadow-sm">
         <div className="flex items-center justify-between">
           {/* Left side: Scan Mode Toggle */}
           <div className="flex items-center">
             {/* Modern toggle switch */}
             <div 
-              className={`w-12 h-6 rounded-full p-1 cursor-pointer relative transition-colors duration-300 ${continuousScan ? 'bg-blue-500' : 'bg-slate-700'}`}
+              className={`w-12 h-6 rounded-full p-1 cursor-pointer relative transition-colors duration-300 ${continuousScan ? 'bg-primary' : 'bg-muted'}`}
               onClick={() => setContinuousScan(!continuousScan)}
             >
               <div 
                 className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${continuousScan ? 'translate-x-6' : ''}`}
               ></div>
             </div>
-            <span className="ml-3 text-slate-300 text-sm font-medium">
+            <span className="ml-3 text-foreground text-sm font-medium">
               {continuousScan ? 'Continuous Scan' : 'Single Scan'}
             </span>
           </div>

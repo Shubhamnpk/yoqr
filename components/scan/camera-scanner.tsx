@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { QRCodeResult, QRTypeInfo } from '@/types/qr-types';
-import { Focus } from 'lucide-react';
+import { Focus, Camera } from 'lucide-react';
 
 // QR Types configuration with regex patterns for detection
 const qrTypes: Record<string, QRTypeInfo> = {
@@ -256,15 +256,18 @@ export default function CameraScanner({
       await checkFlashSupport();
       
     } catch (error) {
-      console.error("Error starting scanner:", error);
-      setError(`Failed to start scanner: ${error instanceof Error ? error.message : String(error)}`);
+      // Only log detailed errors in development
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("Error starting scanner:", error);
+      }
+      setError(`Camera access error. Please check your permissions and try again.`);
       setIsScanning(false);
       setIsActivelyScanning(false);
     } finally {
       setLoading(false);
     }
   };
-
+  
   // Stop QR scanner
   const stopScanner = async () => {
     if (!scannerRef.current) return;
@@ -356,14 +359,14 @@ export default function CameraScanner({
     <div className="relative w-full">
       {/* Scanner container */}
       <div 
-        className="relative overflow-hidden bg-gray-800/70 rounded-xl"
+        className="relative overflow-hidden bg-muted/70 rounded-xl shadow-inner"
         style={{ minHeight: '240px' }}
       >
         {/* Flashlight toggle button - only show when flash is supported and scanning */}
         {isScanning && hasFlash && (
           <button
             onClick={toggleFlash}
-            className={`absolute top-4 right-4 z-20 p-2 rounded-full ${flashOn ? 'bg-amber-500 text-white' : 'bg-gray-700 text-gray-300'} transition-colors`}
+            className={`absolute top-4 right-4 z-20 p-2 rounded-full ${flashOn ? 'bg-amber-500 text-white' : 'bg-background/80 text-muted-foreground'} transition-colors shadow-md`}
             title={flashOn ? 'Turn off flashlight' : 'Turn on flashlight'}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -373,14 +376,14 @@ export default function CameraScanner({
         )}
         {/* Scan animation */}
         {isScanning && (
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-scan-line z-10" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent animate-scan-line z-10" />
         )}
         
         {/* Corner markers */}
-        <div className="absolute top-5 left-5 w-5 h-5 border-t-2 border-l-2 border-blue-500 opacity-80 z-10" />
-        <div className="absolute top-5 right-5 w-5 h-5 border-t-2 border-r-2 border-blue-500 opacity-80 z-10" />
-        <div className="absolute bottom-5 left-5 w-5 h-5 border-b-2 border-l-2 border-blue-500 opacity-80 z-10" />
-        <div className="absolute bottom-5 right-5 w-5 h-5 border-b-2 border-r-2 border-blue-500 opacity-80 z-10" />
+        <div className="absolute top-5 left-5 w-5 h-5 border-t-2 border-l-2 border-primary opacity-80 z-10" />
+        <div className="absolute top-5 right-5 w-5 h-5 border-t-2 border-r-2 border-primary opacity-80 z-10" />
+        <div className="absolute bottom-5 left-5 w-5 h-5 border-b-2 border-l-2 border-primary opacity-80 z-10" />
+        <div className="absolute bottom-5 right-5 w-5 h-5 border-b-2 border-r-2 border-primary opacity-80 z-10" />
         
         {/* QR Code reader */}
         <div 
@@ -394,15 +397,15 @@ export default function CameraScanner({
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-medium text-gray-400 p-2 z-20 w-11/12 max-w-xs sm:w-auto">
             <div className="flex flex-col items-center justify-center p-3 sm:p-4 text-center">
               <div className="relative mb-2 sm:mb-3">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full opacity-20 blur-xl animate-pulse"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/60 rounded-full opacity-20 blur-xl animate-pulse"></div>
                 <div className="relative">
-                  <Focus className="h-8 w-8 sm:h-10 sm:w-10 text-purple-600 dark:text-purple-400" />
+                  <Focus className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
                 </div>
-                <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center shadow-md">
+                <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-r from-primary to-primary/70 flex items-center justify-center shadow-md">
                   <span className="text-white text-xs font-bold">QR</span>
                 </div>
               </div>
-              <p className="text-base sm:text-lg font-medium mb-1 sm:mb-2">Position QR Code Here</p>
+              <p className="text-base sm:text-lg font-medium mb-1 sm:mb-2 text-foreground">Position QR Code Here</p>
               <p className="text-xs sm:text-sm max-w-xs text-center text-muted-foreground">
               Click the Start Scan button to activate the camera
               </p>
@@ -410,10 +413,11 @@ export default function CameraScanner({
           </div>
         )}
         
-        {/* Loading overlay */}
+        {/* Loading state */}
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/70 rounded-lg z-30">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 border-3 sm:border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-md flex flex-col items-center justify-center z-20 space-y-4 p-8">
+            <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+            <h3 className="text-xl font-bold text-foreground">Loading camera...</h3>
           </div>
         )}
       </div>
@@ -434,7 +438,7 @@ export default function CameraScanner({
             <select
               value={currentCamera}
               onChange={(e) => setCurrentCamera(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full bg-background/80 border border-border/40 text-foreground rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
             >
               {availableCameras.map((camera) => (
                 <option key={camera.id} value={camera.id}>
