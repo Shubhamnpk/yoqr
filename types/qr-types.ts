@@ -38,4 +38,18 @@ export interface QRGenerateOptions {
     width: number;
     excavate: boolean;
   };
+  // Corner styles for QR codes
+  cornerStyle?: 'square' | 'rounded' | 'dots' | 'extra-rounded';
+  // Dot style for QR code modules
+  dotStyle?: 'square' | 'dots' | 'classy' | 'classy-rounded';
+  // Border radius in percent (0-100)
+  borderRadius?: number;
+  // QR code gradient options
+  gradient?: {
+    enabled: boolean;
+    startColor: string;
+    endColor: string;
+    type: 'linear' | 'radial';
+    direction?: 'horizontal' | 'vertical' | 'diagonal';
+  };
 }
