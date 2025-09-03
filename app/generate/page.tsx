@@ -31,41 +31,43 @@ export default function GeneratePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-radial from-background to-background/80 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
-        {/* Hero section */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl mb-3">
-            Create Professional QR Codes
+    <div className="min-h-screen bg-gradient-radial from-background to-background/80 py-4 px-3 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Compact Hero section */}
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
+            Create QR Codes
           </h1>
-          <p className="max-w-2xl mx-auto text-muted-foreground">
-            Generate high-quality QR codes for URLs, text, WiFi, contacts, and more. Fully customizable.
+          <p className="max-w-xl mx-auto text-sm sm:text-base text-muted-foreground px-2">
+            Generate professional QR codes with advanced customization
           </p>
         </div>
-        
-        {/* Main content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-          {/* Generator form */}
-          <div className="lg:col-span-2">
-            <Card className="bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden p-6">
-              <QRCodeGenerator 
-                content={content}
-                setContent={setContent}
-                contentType={contentType}
-                setContentType={setContentType}
-              />
-            </Card>
-          </div>
-          
-          {/* Preview section */}
-          <div className="lg:col-span-1">
-            <QRCodePreview 
+
+        {/* Mobile-first layout */}
+        <div className="space-y-4 sm:space-y-6">
+          {/* Generator form - Full width on mobile */}
+          <Card className="bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden">
+            <QRCodeGenerator
               content={content}
-              options={options}
+              setContent={setContent}
+              contentType={contentType}
+              setContentType={setContentType}
             />
-            
-            <div className="mt-6">
-              <QRCodeOptions 
+          </Card>
+
+          {/* Preview and Options - Side by side on larger screens */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            {/* Preview section */}
+            <div className="order-2 lg:order-1">
+              <QRCodePreview
+                content={content}
+                options={options}
+              />
+            </div>
+
+            {/* Options section */}
+            <div className="order-1 lg:order-2">
+              <QRCodeOptions
                 options={options}
                 onChange={handleOptionsChange}
                 enabled={showCustomization}
