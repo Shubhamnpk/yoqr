@@ -9,29 +9,43 @@ import { Toaster } from '@/components/ui/toaster';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'YOQR - Free QR Code privacy foused Generator & Scanner | Create & Scan QR Codes Instantly',
-  description: 'The most powerful free QR code generator and scanner. Create custom QR codes for URLs, text, WiFi, contacts, and more. Scan QR codes instantly with your camera.',
-  keywords: 'qr code, qr code generator, qr code scanner, free qr code, custom qr code, qr code reader, create qr code',
+  title: 'YOQR - Free QR Code Privacy-Focused Generator & Scanner | Create & Scan QR Codes Instantly',
+  description: 'The most powerful free QR code generator and scanner. Create custom QR codes for URLs, text, WiFi, contacts, and more. Scan QR codes instantly with your camera. Privacy-focused, no data collection.',
+  keywords: 'qr code, qr code generator, qr code scanner, free qr code, custom qr code, qr code reader, create qr code, privacy focused, secure qr code, offline qr generator',
   authors: [{ name: 'YOQR Team' }],
   openGraph: {
-    title: 'YOQR - Free QR Code privacy foused Generator & Scanner',
-    description: 'The most powerful free QR code generator and scanner. Create custom QR codes for URLs, text, WiFi, contacts, and more.',
+    title: 'YOQR - Free QR Code Privacy-Focused Generator & Scanner',
+    description: 'Create and scan QR codes instantly with our powerful free tool. Privacy-focused, no data collection.',
     images: ['/og-image.jpg'],
     type: 'website',
+    url: 'https://yoqr.netlify.app',
+    siteName: 'YOQR',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'YOQR - Free QR Code privacy foused Generator & Scanner',
-    description: 'Create and scan QR codes instantly with our powerful free tool',
+    title: 'YOQR - Free QR Code Privacy-Focused Generator & Scanner',
+    description: 'Create and scan QR codes instantly with our powerful free tool. Privacy-focused, no data collection.',
     images: ['/og-image.jpg'],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   alternates: {
     canonical: 'https://yoqr.netlify.app',
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+  },
+  category: 'technology',
 };
 
 export default function RootLayout({

@@ -12,7 +12,7 @@ export default function GeneratePage() {
   // Generator state
   const [content, setContent] = useState('');
   const [contentType, setContentType] = useState<QRContentType>('url');
-  const [showCustomization, setShowCustomization] = useState(false);
+  const [showCustomization, setShowCustomization] = useState(true);
   const [options, setOptions] = useState<QRGenerateOptions>({
     size: 200,
     backgroundColor: '#ffffff',
@@ -55,18 +55,19 @@ export default function GeneratePage() {
             />
           </Card>
 
-          {/* Preview and Options - Side by side on larger screens */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {/* Preview section */}
-            <div className="order-2 lg:order-1">
+          {/* Preview and Options - Desktop optimized layout */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+            {/* Preview section - Takes up 1 column on desktop (narrower) */}
+            <div className="xl:col-span-1 order-1">
               <QRCodePreview
                 content={content}
                 options={options}
+                onToggleCustomization={() => setShowCustomization(!showCustomization)}
               />
             </div>
 
-            {/* Options section */}
-            <div className="order-1 lg:order-2">
+            {/* Options section - Takes up 2 columns on desktop (wider) */}
+            <div className="xl:col-span-2 order-2">
               <QRCodeOptions
                 options={options}
                 onChange={handleOptionsChange}
@@ -76,11 +77,11 @@ export default function GeneratePage() {
             </div>
           </div>
         </div>
-        
+
         {/* Features section */}
         <div className="mt-16 border-t border-border/30 pt-10">
           <h2 className="text-2xl font-bold mb-6 text-center">Features</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-card/60 backdrop-blur-sm p-6 rounded-xl border border-border/30">
               <div className="bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
@@ -89,7 +90,7 @@ export default function GeneratePage() {
               <h3 className="text-lg font-semibold mb-2">Customizable Design</h3>
               <p className="text-muted-foreground">Change colors, add logos, adjust size, and select error correction levels to make your QR code stand out.</p>
             </div>
-            
+
             <div className="bg-card/60 backdrop-blur-sm p-6 rounded-xl border border-border/30">
               <div className="bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,7 +100,7 @@ export default function GeneratePage() {
               <h3 className="text-lg font-semibold mb-2">Add Your Logo</h3>
               <p className="text-muted-foreground">Embed your brand by adding a logo or image to the center of your QR code for better brand recognition.</p>
             </div>
-            
+
             <div className="bg-card/60 backdrop-blur-sm p-6 rounded-xl border border-border/30">
               <div className="bg-primary/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mb-4">
                 <ArrowRight className="h-6 w-6 text-primary" />

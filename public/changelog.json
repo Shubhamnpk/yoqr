@@ -1,0 +1,51 @@
+{
+  "versions": [
+    {
+      "version": "1.0.0",
+      "date": "2025-10-30",
+      "type": "major",
+      "changes": [
+        {
+          "type": "feature",
+          "description": "Initial release of YOQR - Complete QR code generator and scanner platform"
+        },
+        {
+          "type": "feature",
+          "description": "Advanced QR code customization with colors, patterns, logos, and effects"
+        },
+        {
+          "type": "feature",
+          "description": "Real-time QR code preview with instant download and copy functionality"
+        },
+        {
+          "type": "feature",
+          "description": "Camera-based QR code scanning with continuous scan mode"
+        },
+        {
+          "type": "feature",
+          "description": "Support for multiple QR code types (URL, Text, WiFi, Contact, Email, SMS, Geo, Phone)"
+        },
+        {
+          "type": "feature",
+          "description": "Privacy-focused design with no data collection"
+        },
+        {
+          "type": "feature",
+          "description": "Responsive design optimized for mobile and desktop"
+        },
+        {
+          "type": "feature",
+          "description": "PWA support for offline functionality"
+        },
+        {
+          "type": "improvement",
+          "description": "Modern UI with dark/light theme support"
+        },
+        {
+          "type": "improvement",
+          "description": "SEO optimized with proper meta tags and sitemap"
+        }
+      ]
+    }
+  ]
+}
