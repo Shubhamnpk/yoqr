@@ -8,6 +8,9 @@ const withPWA = require('next-pwa')({
 
 const nextConfig = {
   output: 'export',
+  trailingSlash: true,
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/yoqr/' : '',
+  basePath: process.env.NODE_ENV === 'production' ? '/yoqr' : '',
   eslint: {
     ignoreDuringBuilds: true,
   },
