@@ -13,7 +13,7 @@ export default function ScanPage() {
   const [scanResult, setScanResult] = useState<QRCodeResult | null>(null);
   const [scanHistory, setScanHistory] = useState<QRCodeResult[]>([]);
   const [currentFilter, setCurrentFilter] = useState('all');
-  
+
   // Handle successful scan
   const handleScanSuccess = (result: QRCodeResult) => {
     setScanResult(result);
@@ -29,7 +29,7 @@ export default function ScanPage() {
   // Handle export CSV
   const handleExportCSV = () => {
     if (scanHistory.length === 0) return;
-    
+
     // Create CSV content
     const csvContent = [
       // CSV header
@@ -41,7 +41,7 @@ export default function ScanPage() {
         item.timestamp
       ].join(','))
     ].join('\n');
-    
+
     // Create and download CSV file
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -57,7 +57,7 @@ export default function ScanPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8 text-center">QR Code Scanner</h1>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <QRScanner
@@ -69,13 +69,13 @@ export default function ScanPage() {
             setCurrentCamera={setCurrentCamera}
             onScanSuccess={handleScanSuccess}
           />
-          
+
           <ResultDisplay result={scanResult} />
         </div>
-        
+
         <div className="lg:col-span-1">
-          <HistoryPanel 
-            history={scanHistory} 
+          <HistoryPanel
+            history={scanHistory}
             currentFilter={currentFilter}
             setCurrentFilter={setCurrentFilter}
             onSelectItem={setScanResult}

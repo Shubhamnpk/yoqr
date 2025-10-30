@@ -53,7 +53,7 @@ export default function Footer() {
             <h3 className="font-medium text-sm mb-4">Resources</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="https://github.com/" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1" target="_blank" rel="noopener noreferrer">
+                <a href="https://github.com/Shubhamnpk/yoqr" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1" target="_blank" rel="noopener noreferrer">
                   <Github className="h-3.5 w-3.5" />
                   <span>GitHub</span>
                 </a>
@@ -80,8 +80,10 @@ export default function Footer() {
             © {currentYear} YOQR. All rights reserved.
           </p>
           <div className="flex items-center text-xs text-muted-foreground">
-            <span>Made with</span>
-            <Heart className="h-3 w-3 mx-1 text-red-500" />
+            <span>Developed by</span>
+            <a href="https://www.bit-nepal.com/" className="mx-1 text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+              Bit Nepal
+            </a>
             <span>using Next.js and Tailwind CSS</span>
           </div>
         </div>

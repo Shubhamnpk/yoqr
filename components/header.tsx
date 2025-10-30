@@ -41,6 +41,7 @@ export default function Header() {
     { name: "Home", href: "/", icon: <QrCode className="h-4 w-4 mr-2" /> },
     { name: "Scan", href: "/scan", icon: <Scan className="h-4 w-4 mr-2" /> },
     { name: "Generate", href: "/generate", icon: <QrCode className="h-4 w-4 mr-2" /> },
+    { name: "About", href: "/about", icon: <Info className="h-4 w-4 mr-2" /> },
   ];
 
   return (

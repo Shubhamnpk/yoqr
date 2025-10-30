@@ -38,12 +38,11 @@ export interface QRGenerateOptions {
     width: number;
     excavate: boolean;
   };
-  // Corner styles for QR codes
-  cornerStyle?: 'square' | 'rounded' | 'dots' | 'extra-rounded';
-  // Dot style for QR code modules
-  dotStyle?: 'square' | 'dots' | 'classy' | 'classy-rounded';
-  // Border radius in percent (0-100)
-  borderRadius?: number;
+  // Container styling
+  containerStyle?: 'square' | 'rounded' | 'circle';
+  // Border and shadow
+  borderWidth?: number;
+  shadow?: boolean;
   // QR code gradient options
   gradient?: {
     enabled: boolean;
@@ -52,4 +51,17 @@ export interface QRGenerateOptions {
     type: 'linear' | 'radial';
     direction?: 'horizontal' | 'vertical' | 'diagonal';
   };
+  // Background pattern options
+  pattern?: string | null;
+  // Animation effects
+  animation?: string | null;
+  // Multiple logos support
+  logos?: Array<{
+    src: string;
+    position: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+    size: number;
+  }>;
+  // Export settings
+  exportFormat?: 'png' | 'svg' | 'jpeg' | 'pdf';
+  exportQuality?: number;
 }

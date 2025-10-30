@@ -68,7 +68,7 @@ export default function CameraScanner({
   const [availableCameras, setAvailableCameras] = useState<CameraDevice[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasFlash, setHasFlash] = useState<boolean>(false);
+  const [hasTorch, setHasTorch] = useState<boolean>(false);
   const [flashOn, setFlashOn] = useState<boolean>(false);
   const [isActivelyScanning, setIsActivelyScanning] = useState<boolean>(false);
   
@@ -105,7 +105,7 @@ export default function CameraScanner({
 
   // Toggle flashlight
   const toggleFlash = async () => {
-    if (!scannerRef.current || !hasFlash) return;
+    if (!scannerRef.current || !hasTorch) return;
 
     try {
       if (flashOn) {
@@ -119,22 +119,22 @@ export default function CameraScanner({
       console.error("Error toggling flashlight:", error);
       setError('Failed to toggle flashlight');
       // If we get an error, assume the device doesn't actually support flash
-      setHasFlash(false);
+      setHasTorch(false);
     }
   };
 
   // Check if device supports flashlight
   const checkFlashSupport = async () => {
     if (!scannerRef.current) return false;
-    
+
     try {
-      // TypeScript doesn't know about the hasFlash method, but it exists in the library
-      const torchSupported = await (scannerRef.current as any).hasFlash();
-      setHasFlash(torchSupported);
+      // TypeScript doesn't know about the hasTorch method, but it exists in the library
+      const torchSupported = await (scannerRef.current as any).hasTorch();
+      setHasTorch(torchSupported);
       return torchSupported;
     } catch (error) {
       console.error("Error checking flash support:", error);
-      setHasFlash(false);
+      setHasTorch(false);
       return false;
     }
   };
@@ -363,7 +363,7 @@ export default function CameraScanner({
         style={{ minHeight: '240px' }}
       >
         {/* Flashlight toggle button - only show when flash is supported and scanning */}
-        {isScanning && hasFlash && (
+        {isScanning && hasTorch && (
           <button
             onClick={toggleFlash}
             className={`absolute top-4 right-4 z-20 p-2 rounded-full ${flashOn ? 'bg-amber-500 text-white' : 'bg-background/80 text-muted-foreground'} transition-colors shadow-md`}
@@ -436,6 +436,7 @@ export default function CameraScanner({
           <div>
             <label className="block text-sm text-gray-400 mb-2">Select Camera</label>
             <select
+              title='select camera'
               value={currentCamera}
               onChange={(e) => setCurrentCamera(e.target.value)}
               className="w-full bg-background/80 border border-border/40 text-foreground rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
