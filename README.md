@@ -1,6 +1,6 @@
 # YOQR - Free QR Code Generator & Scanner
 
-![YOQR Logo](public/bitai%20(3).png)
+![YOQR Logo](public/favicon.svg)
 
 A modern, privacy-focused QR code generator and scanner built with Next.js, TypeScript, and Tailwind CSS. Create professional QR codes with advanced customization options and scan them instantly with your camera.
 

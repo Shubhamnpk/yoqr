@@ -436,6 +436,7 @@ export default function CameraScanner({
           <div>
             <label className="block text-sm text-gray-400 mb-2">Select Camera</label>
             <select
+              title='select camera'
               value={currentCamera}
               onChange={(e) => setCurrentCamera(e.target.value)}
               className="w-full bg-background/80 border border-border/40 text-foreground rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"

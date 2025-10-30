@@ -600,6 +600,7 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                                   onChange({ logos: updated });
                                 }}
                                 className="bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 text-xs"
+                                title='remove logo'
                               >
                                 <X className="h-2 w-2" />
                               </button>
@@ -624,6 +625,7 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                       {Array.from({ length: 4 }).map((_, index) => (
                         <input
                           key={index}
+                          title='input file'
                           type="file"
                           ref={(el) => (multipleLogoRefs.current[index] = el)}
                           onChange={(e) => {
@@ -677,6 +679,7 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                             className="w-full h-16 object-contain rounded"
                           />
                           <button
+                            title='remove logo'
                             onClick={handleRemoveLogo}
                             className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
                           >
@@ -695,6 +698,7 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                       <input
                         type="file"
                         ref={fileInputRef}
+                        title='input file'
                         onChange={handleLogoUpload}
                         accept="image/*"
                         className="hidden"

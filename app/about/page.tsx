@@ -4,8 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Heart, MapPin, Code, Users, Globe, Sparkles } from 'lucide-react';
 import ChangelogModal from '@/components/about/changelog-modal';
+import packageJson from '../../package.json';
 
 export default function AboutPage() {
+  const version = packageJson.version;
+
   return (
     <div className="min-h-screen bg-gradient-radial from-background to-background/80 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -30,7 +33,7 @@ export default function AboutPage() {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Version:</span>
-              <Badge variant="secondary" className="font-mono">1.0.0</Badge>
+              <Badge variant="secondary" className="font-mono">{version}</Badge>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Platform:</span>
