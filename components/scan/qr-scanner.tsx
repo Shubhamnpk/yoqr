@@ -75,31 +75,23 @@ function CameraSelector({ currentCamera, setCurrentCamera }: CameraSelectorProps
             setAvailableCameras(formattedCameras);
           }
         } catch (permissionError) {
-          // User denied camera permission or no camera available
-          // We'll handle this silently and just not show the camera selector
         }
       } catch (error) {
-        // Silently fail - the component will just not show the camera selector
-        // This is better UX than showing errors in the console
       } finally {
         setLoading(false);
       }
     }
-    
-    // Delay camera detection slightly to prevent race conditions
-    const timer = setTimeout(() => {
+        const timer = setTimeout(() => {
       detectCameras();
     }, 500);
     
     return () => clearTimeout(timer);
   }, []);
   
-  // If no cameras or still loading, don't render anything
   if (loading || availableCameras.length === 0) {
     return null;
   }
   
-  // Only show selector if we have multiple cameras
   if (availableCameras.length <= 1) {
     return null;
   }
@@ -137,7 +129,6 @@ export default function QRScanner({
 
   return (
     <div className="bg-card/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 mb-6 border border-border/50">
-      {/* Scanner mode toggle - modern pill-shaped toggle */}
       <div className="flex mb-6 bg-muted/50 p-1.5 rounded-lg shadow-sm">
         <button
           className={`flex-1 flex items-center justify-center py-3 transition-all duration-200 ${
@@ -160,16 +151,14 @@ export default function QRScanner({
           onClick={() => setScanMode('image')}
         >
           <Upload className="h-5 w-5 mr-2" />
-          <span>Upload Image</span>
+          <span>Upload</span>
         </button>
       </div>
       
       {/* Controls section - modern glassmorphism style */}
       <div className="bg-muted/30 backdrop-blur-sm rounded-xl p-4 mb-6 border border-border/40 shadow-sm">
         <div className="flex items-center justify-between">
-          {/* Left side: Scan Mode Toggle */}
           <div className="flex items-center">
-            {/* Modern toggle switch */}
             <div 
               className={`w-12 h-6 rounded-full p-1 cursor-pointer relative transition-colors duration-300 ${continuousScan ? 'bg-primary' : 'bg-muted'}`}
               onClick={() => setContinuousScan(!continuousScan)}

@@ -208,6 +208,7 @@ export default function ResultDisplay({ result }: ResultDisplayProps) {
                               <TooltipTrigger asChild>
                                 <button 
                                   onClick={() => copyToClipboard(result.data)}
+                                  title='copy vcard'
                                   className="text-xs flex items-center gap-1 bg-muted/30 hover:bg-muted p-1.5 rounded-full"
                                 >
                                   <Copy className="h-3.5 w-3.5" />
@@ -328,6 +329,7 @@ export default function ResultDisplay({ result }: ResultDisplayProps) {
                               <TooltipTrigger asChild>
                                 <button 
                                   onClick={() => copyWifiDetails(result.data, toastUtil)}
+                                  title='copy details'
                                   className="text-xs flex items-center gap-1 bg-muted/30 hover:bg-muted p-1.5 rounded-full"
                                 >
                                   <Copy className="h-3.5 w-3.5" />
@@ -452,7 +454,8 @@ export default function ResultDisplay({ result }: ResultDisplayProps) {
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <button 
-                                      onClick={() => navigator.share?.({ url: result.data, title: "Shared from YOQR" })} 
+                                      onClick={() => navigator.share?.({ url: result.data, title: "Shared from YOQR" })}
+                                      title='share'
                                       className="text-xs flex items-center gap-1 bg-muted/30 hover:bg-muted p-1.5 rounded-full"
                                     >
                                       <Share2 className="h-3.5 w-3.5" />
@@ -469,6 +472,7 @@ export default function ResultDisplay({ result }: ResultDisplayProps) {
                                   <TooltipTrigger asChild>
                                     <button 
                                       onClick={() => copyToClipboard(result.data)} 
+                                      title='copy link'
                                       className="text-xs flex items-center gap-1 bg-muted/30 hover:bg-muted p-1.5 rounded-full"
                                     >
                                       <Copy className="h-3.5 w-3.5" />

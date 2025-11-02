@@ -128,10 +128,16 @@ export default function CameraScanner({
     if (!scannerRef.current) return false;
 
     try {
-      // TypeScript doesn't know about the hasTorch method, but it exists in the library
-      const torchSupported = await (scannerRef.current as any).hasTorch();
-      setHasTorch(torchSupported);
-      return torchSupported;
+      // Check if hasTorch method exists before calling it
+      if (typeof (scannerRef.current as any).hasTorch === 'function') {
+        const torchSupported = await (scannerRef.current as any).hasTorch();
+        setHasTorch(torchSupported);
+        return torchSupported;
+      } else {
+        // Method doesn't exist, assume no torch support
+        setHasTorch(false);
+        return false;
+      }
     } catch (error) {
       console.error("Error checking flash support:", error);
       setHasTorch(false);
@@ -379,20 +385,17 @@ export default function CameraScanner({
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent animate-scan-line z-10" />
         )}
         
-        {/* Corner markers */}
         <div className="absolute top-5 left-5 w-5 h-5 border-t-2 border-l-2 border-primary opacity-80 z-10" />
         <div className="absolute top-5 right-5 w-5 h-5 border-t-2 border-r-2 border-primary opacity-80 z-10" />
         <div className="absolute bottom-5 left-5 w-5 h-5 border-b-2 border-l-2 border-primary opacity-80 z-10" />
         <div className="absolute bottom-5 right-5 w-5 h-5 border-b-2 border-r-2 border-primary opacity-80 z-10" />
         
-        {/* QR Code reader */}
         <div 
           id="reader" 
           ref={readerRef}
           className="w-full h-full"
         />
         
-        {/* Position guide */}
         {!isScanning && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-medium text-gray-400 p-2 z-20 w-11/12 max-w-xs sm:w-auto">
             <div className="flex flex-col items-center justify-center p-3 sm:p-4 text-center">
@@ -431,25 +434,6 @@ export default function CameraScanner({
       
       {/* Camera controls */}
       <div className="mt-3 space-y-3">
-        {/* Camera selector */}
-        {availableCameras.length > 1 && (
-          <div>
-            <label className="block text-sm text-gray-400 mb-2">Select Camera</label>
-            <select
-              title='select camera'
-              value={currentCamera}
-              onChange={(e) => setCurrentCamera(e.target.value)}
-              className="w-full bg-background/80 border border-border/40 text-foreground rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
-            >
-              {availableCameras.map((camera) => (
-                <option key={camera.id} value={camera.id}>
-                  {camera.label ? (camera.label.length > 30 ? camera.label.substring(0, 30) + '...' : camera.label) : `Camera ${camera.id}`}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-        
         {/* Scan control button */}
         <button
           onClick={() => setIsScanning(!isScanning)}

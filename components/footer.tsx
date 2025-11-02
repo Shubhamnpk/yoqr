@@ -82,7 +82,7 @@ export default function Footer() {
           <div className="flex items-center text-xs text-muted-foreground">
             <span>Developed by</span>
             <a href="https://www.bit-nepal.com/" className="mx-1 text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-              Bit Nepal
+              bitnepal and Yoguru team 
             </a>
             <span>using Next.js and Tailwind CSS</span>
           </div>

@@ -1,6 +1,33 @@
 {
   "versions": [
     {
+      "version": "1.5.1",
+      "date": "2025-11-02",
+      "type": "minor",
+      "changes": [
+        {
+          "type": "feature",
+          "description": "Add zoom controls, statistics panel, and loading skeleton to QR preview"
+        },
+        {
+          "type": "feature",
+          "description": "Implement drag-and-drop, paste support, and image info display in image scanner"
+        },
+        {
+          "type": "improvement",
+          "description": "Improve camera scanner torch detection and remove unused UI elements"
+        },
+        {
+          "type": "improvement",
+          "description": "Enhance accessibility with button titles and better error handling"
+        },
+        {
+          "type": "improvement",
+          "description": "Update footer developer credits to include Yoguru team"
+        }
+      ]
+    },
+    {
       "version": "1.5.0",
       "date": "2025-10-30",
       "type": "major",

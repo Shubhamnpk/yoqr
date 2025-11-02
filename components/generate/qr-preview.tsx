@@ -5,11 +5,12 @@ import QRCode from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Share2, Copy, Check, Image, QrCode, Smartphone, Loader2, Settings } from 'lucide-react';
+import { Download, Share2, Copy, Check, Image, QrCode, Smartphone, Loader2, Settings, ZoomIn, ZoomOut, RotateCcw, Info, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QRGenerateOptions } from '@/types/qr-types';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Add custom CSS animations
 const customStyles = `
@@ -31,8 +32,6 @@ const customStyles = `
     animation: qr-glow 3s infinite;
   }
 `;
-
-// Inject styles
 if (typeof document !== 'undefined') {
   const styleSheet = document.createElement('style');
   styleSheet.textContent = customStyles;
@@ -51,23 +50,42 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [showStats, setShowStats] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   
   // Update QR value when content changes
   useEffect(() => {
-    setQrValue(content || ' '); // Use space if empty to avoid QR error
+    if (content) {
+      setIsGenerating(true);
+      setTimeout(() => {
+        setQrValue(content);
+        setIsGenerating(false);
+      }, 300);
+    } else {
+      setQrValue(' ');
+      setIsGenerating(false);
+    }
   }, [content]);
 
   // Force re-render when options change to ensure styles are applied
   useEffect(() => {
-    // This ensures the component re-renders when options change
-    const timer = setTimeout(() => {
-      // Small delay to ensure DOM updates
-    }, 10);
-    return () => clearTimeout(timer);
-  }, [options]);
+    if (content) {
+      setIsGenerating(true);
+      const timer = setTimeout(() => {
+        setIsGenerating(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [options, content]);
+
+  // Reset zoom when content changes
+  useEffect(() => {
+    setZoomLevel(1);
+  }, [content]);
   
   // Download QR code as PNG
   const downloadQR = async () => {
@@ -87,14 +105,12 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
     
     try {
       setDownloading(true);
-
-      // Create a new canvas to capture the styled QR code
       const qrContainer = qrRef.current;
       if (!qrContainer) return;
 
       const canvas = await html2canvas(qrContainer, {
         backgroundColor: options.gradient?.enabled ? null : options.backgroundColor,
-        scale: 2, // Higher resolution
+        scale: 2,
         useCORS: true,
         allowTaint: true
       });
@@ -178,7 +194,6 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
         }
       });
     } catch (err) {
-      console.error('Error copying QR code:', err);
       toast({
         title: "Copy failed",
         description: "There was an error copying the QR code",
@@ -191,133 +206,137 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
       });
     }
   };
-  
-  // Share QR code (if Web Share API is available)
-  const shareQR = () => {
-    if (!content) {
-      toast({
-        title: "Cannot share empty QR code",
-        description: "Please enter some content first",
-        variant: "destructive",
-        className: "bg-card/90 backdrop-blur-lg border border-border/50 shadow-lg",
-        style: {
-          color: 'var(--foreground)',
-          borderRadius: '0.75rem'
-        }
-      });
-      return;
-    }
-    
-    try {
-      if (navigator.share) {
-        const canvas = document.getElementById('qr-canvas') as HTMLCanvasElement;
-        if (!canvas) return;
-        
-        canvas.toBlob(async (blob) => {
-          if (!blob) return;
-          
-          const file = new File([blob], "qrcode.png", { type: "image/png" });
-          
-          try {
-            await navigator.share({
-              title: 'QR Code',
-              text: 'Check out this QR code!',
-              files: [file]
-            });
-          } catch (err) {
-            console.error('Share error:', err);
-            // Fallback to copying if sharing fails
-            copyQR();
-          }
-        });
-      } else {
-        // Fallback for browsers that don't support Web Share API
-        copyQR();
-        toast({
-          title: "Share not supported",
-          description: "QR code copied to clipboard instead",
-          variant: "default",
-          className: "bg-card/90 backdrop-blur-lg border border-border/50 shadow-lg",
-          style: {
-            color: 'var(--foreground)',
-            borderRadius: '0.75rem'
-          }
-        });
-      }
-    } catch (err) {
-      console.error('Error sharing QR code:', err);
-      toast({
-        title: "Share failed",
-        description: "There was an error sharing the QR code",
-        variant: "destructive",
-        className: "bg-card/90 backdrop-blur-lg border border-border/50 shadow-lg",
-        style: {
-          color: 'var(--foreground)',
-          borderRadius: '0.75rem'
-        }
-      });
-    }
+
+  // Zoom controls
+  const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 0.25, 3));
+  const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 0.25, 0.5));
+  const resetZoom = () => setZoomLevel(1);
+
+  // Calculate QR quality based on content length and error correction
+  const getQRQuality = () => {
+    const length = content?.length || 0;
+    const level = options.errorCorrectionLevel;
+
+    if (length < 50 && level === 'L') return { score: 95, label: 'Excellent', color: 'text-green-500' };
+    if (length < 100 && level === 'M') return { score: 90, label: 'Very Good', color: 'text-green-400' };
+    if (length < 200 && level === 'Q') return { score: 85, label: 'Good', color: 'text-yellow-500' };
+    if (length < 500 && level === 'H') return { score: 80, label: 'Fair', color: 'text-orange-500' };
+    return { score: 70, label: 'Basic', color: 'text-red-500' };
   };
-  
+
+  const qrQuality = getQRQuality();
+
   return (
     <Card className="bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
       <CardHeader className="pb-2">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex-1">
-            <CardTitle className="text-xl font-bold flex items-center">
-              <QrCode className="h-5 w-5 mr-2 text-primary" />
-              QR Code Preview
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl font-bold flex items-center">
+                <QrCode className="h-5 w-5 mr-2 text-primary" />
+                Preview
+              </CardTitle>
+              {content && (
+                <div className="flex items-center gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowStats(!showStats)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Info className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Toggle QR statistics</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              )}
+            </div>
             <CardDescription>
               {content ? 'Ready to download or share' : 'Enter content to generate a QR code'}
             </CardDescription>
-            {/* Debug info */}
-            <div className="text-xs text-muted-foreground mt-1">
-              Size: {options.size}px | Colors: {options.foregroundColor}/{options.backgroundColor}
-              {options.gradient?.enabled && ' | Gradient: ON'}
-              {options.pattern && ` | Pattern: ${options.pattern}`}
-              {options.containerStyle !== 'square' && ` | Style: ${options.containerStyle}`}
-              {options.shadow && ' | Shadow: ON'}
-            </div>
-          </div>
-          <div className="flex items-center justify-center sm:justify-end">
-            {content && (
-              <Badge variant="outline" className="bg-green-500/10 text-green-500 px-3 py-1">
-                Ready
-              </Badge>
-            )}
           </div>
         </div>
+
+        {/* Statistics Panel */}
+        {showStats && content && (
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg border">
+            <h4 className="text-sm font-medium mb-2 flex items-center">
+              <Info className="h-4 w-4 mr-2" />
+              QR Code Statistics
+            </h4>
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <span className="text-muted-foreground">Content Length:</span>
+                <span className="ml-2 font-medium">{content.length} characters</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Error Correction:</span>
+                <span className="ml-2 font-medium">{options.errorCorrectionLevel.toUpperCase()}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Dimensions:</span>
+                <span className="ml-2 font-medium">{options.size}×{options.size}px</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">File Size:</span>
+                <span className="ml-2 font-medium">~{(options.size * options.size * 0.0003).toFixed(1)} KB</span>
+              </div>
+            </div>
+          </div>
+        )}
       </CardHeader>
-      <CardContent className="p-0">
-        <div
-          className="flex justify-center items-center p-8 mx-4 my-4 rounded-xl shadow-inner transition-all duration-300 relative overflow-hidden"
-          style={{
-            minHeight: `${Math.min(options.size + 40, 400)}px`,
-            background: options.gradient?.enabled
-              ? `linear-gradient(${options.gradient.direction === 'diagonal' ? '45deg' : options.gradient.direction === 'vertical' ? '180deg' : '90deg'}, ${options.gradient.startColor}, ${options.gradient.endColor})`
-              : options.backgroundColor,
-            borderRadius: options.containerStyle === 'circle' ? '50%' :
-                         options.containerStyle === 'rounded' ? '16px' : '8px',
-            border: options.borderWidth ? `${options.borderWidth}px solid ${options.foregroundColor}` : 'none',
-            boxShadow: options.shadow ? '0 10px 25px rgba(0, 0, 0, 0.15)' : 'none'
-          }}
-          onMouseEnter={() => setIsHovering(true)}
-          onMouseLeave={() => setIsHovering(false)}
-          ref={qrRef}
-        >
+      <CardContent className="p-6">
+        <div className="relative">
+          <div
+            className="flex justify-center items-center p-6 rounded-xl shadow-inner transition-all duration-300 relative overflow-hidden"
+            style={{
+              minHeight: `${Math.min(options.size + 40, 400)}px`,
+              background: options.gradient?.enabled
+                ? `linear-gradient(${options.gradient.direction === 'diagonal' ? '45deg' : options.gradient.direction === 'vertical' ? '180deg' : '90deg'}, ${options.gradient.startColor}, ${options.gradient.endColor})`
+                : options.backgroundColor,
+              borderRadius: options.containerStyle === 'circle' ? '50%' :
+                           options.containerStyle === 'rounded' ? '16px' : '8px',
+              border: options.borderWidth ? `${options.borderWidth}px solid ${options.foregroundColor}` : 'none',
+              boxShadow: options.shadow ? '0 10px 25px rgba(0, 0, 0, 0.15)' : 'none'
+            }}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+            ref={qrRef}
+          >
           {content ? (
             <>
-              <div
-                className={`qr-container transition-all duration-300 relative ${isHovering ? 'scale-105' : 'scale-100'} ${
-                  options.animation === 'pulse' ? 'qr-pulse-animation' :
-                  options.animation === 'glow' ? 'qr-glow-animation' : ''
-                }`}
-                style={{
-                  overflow: 'hidden'
-                }}
-              >
+              {isGenerating ? (
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <Skeleton className="h-32 w-32 rounded-lg" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Generating QR code...</span>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className={`qr-container transition-all duration-300 relative ${isHovering ? 'scale-105' : 'scale-100'} ${
+                    options.animation === 'pulse' ? 'qr-pulse-animation' :
+                    options.animation === 'glow' ? 'qr-glow-animation' : ''
+                  }`}
+                  style={{
+                    transform: `scale(${zoomLevel})`,
+                    transformOrigin: 'center',
+                    overflow: 'hidden'
+                  }}
+                >
                 <QRCode
                   id="qr-canvas"
                   value={qrValue}
@@ -381,16 +400,17 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
                     ))}
                   </div>
                 )}
-              </div>
-              
+                </div>
+              )}
+
               {isHovering && (
                 <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
                   <div className="flex space-x-2">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className="bg-white/90 text-black hover:bg-white"
                             onClick={copyQR}
@@ -403,12 +423,12 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    
+
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className="bg-white/90 text-black hover:bg-white"
                             onClick={downloadQR}
@@ -421,49 +441,29 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="bg-white/90 text-black hover:bg-white"
-                            onClick={shareQR}
-                          >
-                            <Share2 className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Share QR code</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
                   </div>
                 </div>
               )}
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center text-muted-foreground">
-              <Image className="h-12 w-12 mb-3 opacity-30" />
-              <p className="text-lg font-medium">QR Preview</p>
-              <p className="text-sm mt-2 max-w-xs text-center">
-                Enter content in the form to generate a QR code
-              </p>
+            <div className="flex flex-col items-center justify-center text-muted-foreground p-6">
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 rounded-full blur-xl animate-pulse"></div>
+                <div className="relative bg-background/50 rounded-full p-4">
+                  <QrCode className="h-12 w-12 " />
+                </div>
+              </div>
+              <p className="text-l mb-1">No QR Code Yet generated</p>
             </div>
           )}
+          </div>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col gap-4 pt-2 pb-6 px-6">
-        <div className="flex items-center text-sm text-muted-foreground justify-center">
-          <Smartphone className="h-4 w-4 mr-2" />
-          {content ? 'Scan with any QR reader app' : ''}
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-2 w-full">
+      <CardFooter className="pt-4 pb-6 px-6">
+        <div className="flex gap-3 w-full">
           <Button
             variant="outline"
-            size="sm"
+            size="lg"
             onClick={copyQR}
             disabled={!content}
             className={`transition-all duration-300 flex-1 ${copied ? 'bg-green-500/10 text-green-500 border-green-500/30' : ''}`}
@@ -473,7 +473,7 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
           </Button>
 
           <Button
-            size="sm"
+            size="lg"
             onClick={downloadQR}
             className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white flex-1"
             disabled={!content || downloading}
