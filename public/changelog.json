@@ -27,7 +27,7 @@
         },
         {
           "type": "improvement",
-          "description": "Add Tailwind Typography plugin for improved article styling"
+          "description": "Add Tailwind CSS Typography plugin for improved article styling"
         },
         {
           "type": "improvement",
