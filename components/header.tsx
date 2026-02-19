@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { MoonIcon, SunIcon, Menu, X, Scan, QrCode, Wifi, WifiOff, Info } from 'lucide-react';
+import { MoonIcon, SunIcon, Menu, X, Scan, QrCode, Wifi, WifiOff, Info, BookOpen } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -41,6 +41,7 @@ export default function Header() {
     { name: "Home", href: "/", icon: <QrCode className="h-4 w-4 mr-2" /> },
     { name: "Scan", href: "/scan", icon: <Scan className="h-4 w-4 mr-2" /> },
     { name: "Generate", href: "/generate", icon: <QrCode className="h-4 w-4 mr-2" /> },
+    { name: "Blog", href: "/blog", icon: <BookOpen className="h-4 w-4 mr-2" /> },
     { name: "About", href: "/about", icon: <Info className="h-4 w-4 mr-2" /> },
   ];
 

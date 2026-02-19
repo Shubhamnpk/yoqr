@@ -1,0 +1,98 @@
+[
+  {
+    "id": "complete-guide-qr-codes",
+    "title": "The Complete Guide to QR Codes in 2024",
+    "description": "Everything you need to know about QR codes - from history to modern applications and best practices.",
+    "category": "Guide",
+    "readTime": "8 min",
+    "date": "2024-01-15",
+    "author": "YOQR Team",
+    "excerpt": "A modern, practical overview of QR codes—how they work, where they shine, and how to use them safely.",
+    "tags": [
+      "QR Basics",
+      "Technology",
+      "Business"
+    ],
+    "content": "# The Complete Guide to QR Codes (2024)\n\nQR codes are the fastest bridge between something physical (a poster, box, menu) and something digital (a link, contact card, payment, or WiFi login). This guide covers the essentials—without the fluff.\n\n## What a QR Code Really Is\n\nA **QR code (Quick Response code)** is a 2D barcode that stores data in a grid. Compared to 1D barcodes, it can store **more information** and is easier to scan at different angles.\n\n### What it can store\n\n- URLs\n- Plain text\n- Contact cards (vCard)\n- WiFi credentials\n- App links, payments, and more\n\n## How Scanning Works (In Plain English)\n\nYour camera detects the square pattern, corrects perspective, and then decodes the grid into text.\n\nA QR code includes:\n\n- **Finder patterns**: the big squares that help the scanner lock on\n- **Alignment patterns**: help with accuracy\n- **Timing patterns**: measure the grid\n- **Data + error correction**: lets the code scan even when partly damaged\n\n## Static vs Dynamic\n\n### Static QR codes\n\n- Content is fixed\n- Best for: contact cards, simple text, permanent links\n\n### Dynamic QR codes\n\n- QR points to a redirect you can update later\n- Best for: campaigns, menus, analytics, changing destinations\n\n## Best Practices (That Prevent 90% of Issues)\n\n- **Use contrast**: dark code on light background\n- **Keep a quiet zone**: don’t crowd the code with borders or text\n- **Size matters**: larger when scanning distance is larger\n- **Test before printing**: test on multiple phones and lighting conditions\n- **Use HTTPS**: builds trust and avoids redirects\n\n## Common Use Cases\n\n### For businesses\n\n- Packaging instructions or authenticity checks\n- Event tickets and check-ins\n- Promotions and landing pages\n- Digital menus\n\n### For personal use\n\n- WiFi sharing\n- Social profile links\n- PDF or portfolio sharing\n\n## QR Security Basics\n\nTreat QR codes like links:\n\n1. Scan only from trusted sources\n2. Preview the destination URL\n3. Avoid codes that look like stickers placed over other codes\n\n## Quick Checklist\n\n- [ ] Correct content\n- [ ] Good contrast\n- [ ] Enough size\n- [ ] Tested on iPhone + Android\n- [ ] Landing page is mobile-friendly\n\n## Conclusion\n\nQR codes are simple, but *details* decide whether they feel premium or frustrating. Use the checklist above and you’ll ship QR codes that scan fast and look professional.\n"
+  },
+  {
+    "id": "qr-code-marketing-strategies",
+    "title": "10 QR Code Marketing Strategies That Actually Work",
+    "description": "Proven QR code marketing strategies to boost engagement and drive conversions for your business.",
+    "category": "Marketing",
+    "readTime": "6 min",
+    "date": "2024-01-10",
+    "author": "YOQR Team",
+    "excerpt": "Ten proven ways to use QR codes in marketing—plus practical tips to improve scans and conversions.",
+    "tags": [
+      "Marketing",
+      "Business",
+      "Strategy"
+    ],
+    "content": "# 10 QR Code Marketing Strategies That Actually Work\n\nQR codes don’t magically create results—**the experience after the scan** does. Use QR codes when they remove friction and deliver clear value.\n\n## 1) Add Value on Packaging\n\nTurn packaging into a “second screen”:\n\n- Setup videos\n- Ingredient sourcing\n- Warranty registration\n- Bonus content\n\n## 2) Smart Menus (That Convert)\n\nIf you use QR menus, make them great:\n\n- Fast loading\n- Large tap targets\n- Clear categories\n- Always show prices\n\n## 3) Event Check-ins & Badges\n\n- Speed up entry\n- Reduce printing issues\n- Track attendance\n\n## 4) Modern Business Cards\n\nUse a QR that links to:\n\n- vCard download\n- Portfolio\n- Calendly / booking\n\n## 5) In‑Store Product Education\n\nPlace codes near high-intent items:\n\n- Specs\n- Reviews\n- Comparisons\n- “How it works” demos\n\n## 6) Post‑Purchase Support\n\nShip a code that answers:\n\n- How to use it\n- How to clean it\n- How to get help\n\n## 7) Social Proof & UGC\n\nLink to:\n\n- Reviews\n- Instagram/TikTok hashtag pages\n- Customer stories\n\n## 8) Lead Capture (Without Pain)\n\nQR → mobile form → instant benefit:\n\n- Discount\n- Free guide\n- Demo request\n\n## 9) Real Estate & Location Tours\n\n- 360 tours\n- Map directions\n- Booking a viewing\n\n## 10) Feedback Loops\n\nPlace codes at “emotion peaks”:\n\n- After service\n- At checkout\n- On packaging\n\n## Make It Perform: 5 Rules\n\n1. **One QR, one goal**\n2. **Add a call‑to‑action** (e.g., “Scan for the menu”)\n3. **Use short, readable links**\n4. **Test placement and lighting**\n5. **Measure results** (dynamic QR + analytics)\n\n## Final Thought\n\nA QR code is a doorway. Make the destination fast, clear, and worth the scan—and your conversion rate will follow.\n"
+  },
+  {
+    "id": "qr-code-security-tips",
+    "title": "QR Code Security: How to Stay Safe in 2024",
+    "description": "Essential security tips for scanning QR codes safely and protecting yourself from scams.",
+    "category": "Security",
+    "readTime": "5 min",
+    "date": "2024-01-05",
+    "author": "YOQR Team",
+    "excerpt": "Scan QR codes safely with a simple set of habits—and learn how scams work so you can spot them fast.",
+    "tags": [
+      "Security",
+      "Privacy",
+      "Safety"
+    ],
+    "content": "# QR Code Security: How to Stay Safe (2024)\n\nQR codes are just data—but they can lead you to risky places. The goal isn’t fear. It’s **smart scanning habits**.\n\n## The 3 Most Common QR Scams\n\n- **Phishing**: QR opens a fake login page\n- **Malicious downloads**: prompts you to install an app or file\n- **Payment redirection**: swaps a payment destination\n\n## A Safe Scanning Checklist\n\n1. **Check the URL preview** before opening\n2. Prefer **HTTPS** and known domains\n3. Avoid codes that look **tampered** (stickers on top)\n4. Don’t grant permissions you don’t understand\n\n## For Businesses: Protect Your Customers\n\n- Use branded landing pages\n- Keep URLs short and consistent\n- Add a clear description: what happens after scanning\n\n## Quick Summary\n\nTreat QR codes like any link: verify, then proceed.\n"
+  },
+  {
+    "id": "business-card-qr-codes",
+    "title": "How to Create Professional QR Code Business Cards",
+    "description": "Step-by-step guide to creating QR codes for business cards that impress clients and grow your network.",
+    "category": "Tutorial",
+    "readTime": "7 min",
+    "date": "2023-12-28",
+    "author": "YOQR Team",
+    "excerpt": "A clean, professional way to use QR codes on business cards—what to link, how to design, and what to avoid.",
+    "tags": [
+      "Business Cards",
+      "Professional",
+      "Networking"
+    ],
+    "content": "# Professional QR Code Business Cards\n\nA good QR business card feels effortless: scan → save contact → done.\n\n## Best Things to Put in Your QR\n\n- **vCard** (best for saving a contact)\n- Portfolio website\n- LinkedIn profile\n- Booking link\n\n## Design Rules (So It Looks Premium)\n\n- Use **high contrast**\n- Keep a **quiet zone** around the code\n- Don’t shrink it too much (test from arm’s length)\n- Add a small label: *“Scan to save contact”*\n\n## Suggested Layout\n\n- Front: Name, role, company\n- Back: QR code + 1 clear CTA\n\n## Final Step: Test Like a Customer\n\nScan on:\n\n- iPhone camera\n- Android camera\n- Low light and bright light\n"
+  },
+  {
+    "id": "wifi-qr-code-setup",
+    "title": "WiFi QR Codes: Complete Setup Guide",
+    "description": "Learn how to create and use WiFi QR codes to share network access securely with guests.",
+    "category": "Tutorial",
+    "readTime": "4 min",
+    "date": "2023-12-20",
+    "author": "YOQR Team",
+    "excerpt": "Share WiFi access instantly with a QR code—plus placement and privacy tips to keep your network safe.",
+    "tags": [
+      "WiFi",
+      "Tutorial",
+      "Technology"
+    ],
+    "content": "# WiFi QR Codes: Complete Setup Guide\n\nA WiFi QR code lets guests connect without typing a password. It’s perfect for homes, cafés, and offices.\n\n## What You Need\n\n- Network name (**SSID**)\n- Password\n- Security type (usually **WPA/WPA2**)\n\n## Setup Steps\n\n1. Open the YOQR generator\n2. Choose **WiFi**\n3. Enter SSID + password\n4. Download and print\n\n## Placement & Privacy Tips\n\n- Place it where guests can scan, not where the public can\n- Update the QR if you change the password\n- Avoid putting it near windows or outside-facing areas\n"
+  },
+  {
+    "id": "qr-code-analytics",
+    "title": "How to Track QR Code Performance and Analytics",
+    "description": "Essential metrics and tools to measure the effectiveness of your QR code campaigns.",
+    "category": "Analytics",
+    "readTime": "9 min",
+    "date": "2023-12-15",
+    "author": "YOQR Team",
+    "excerpt": "What to measure, why it matters, and how to improve QR performance using simple analytics.",
+    "tags": [
+      "Analytics",
+      "Marketing",
+      "Data"
+    ],
+    "content": "# How to Track QR Code Performance & Analytics\n\nIf you run campaigns, don’t guess—measure.\n\n## Metrics That Matter\n\n- **Scan volume** (per day / per placement)\n- **Conversion rate** (what users do after scanning)\n- **Drop‑off** (bounce rate)\n- Device split (mobile types)\n\n## The Best Setup\n\nUse **dynamic QR codes** or short links so you can:\n\n- Change destinations later\n- Track scans and conversions\n- Run A/B tests on landing pages\n\n## Improve Performance Quickly\n\n- Add a strong call‑to‑action\n- Increase QR size if scans are low\n- Improve contrast\n- Make the landing page fast and mobile-first\n"
+  }
+]

@@ -45,6 +45,11 @@ export default function Footer() {
                   Generate QR Code
                 </Link>
               </li>
+              <li>
+                <Link href="/blog" className="text-muted-foreground hover:text-primary transition-colors">
+                  Blog
+                </Link>
+              </li>
             </ul>
           </div>
           

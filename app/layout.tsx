@@ -5,10 +5,13 @@ import { ThemeProvider } from '@/components/theme-provider';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
+import YOQRStructuredData from '@/components/seo/structured-data';
+import GoogleAnalytics from '@/components/seo/analytics';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://yoqr.netlify.app'),
   title: 'YOQR - Free QR Code Privacy-Focused Generator & Scanner | Create & Scan QR Codes Instantly',
   description: 'The most powerful free QR code generator and scanner. Create custom QR codes for URLs, text, WiFi, contacts, and more. Scan QR codes instantly with your camera. Privacy-focused, no data collection.',
   keywords: 'qr code, qr code generator, qr code scanner, free qr code, custom qr code, qr code reader, create qr code, privacy focused, secure qr code, offline qr generator',
@@ -41,11 +44,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://yoqr.netlify.app',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-  },
   category: 'technology',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -61,6 +65,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
+        <YOQRStructuredData />
       </head>
       <body className={inter.className}>
         <ThemeProvider
@@ -75,6 +80,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <Toaster />
+          <GoogleAnalytics />
         </ThemeProvider>
       </body>
     </html>

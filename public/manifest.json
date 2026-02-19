@@ -1,11 +1,15 @@
 {
-  "name": "QR Platform",
-  "short_name": "QR App",
-  "description": "Generate and scan QR codes offline",
+  "name": "YOQR - Free QR Code Generator & Scanner",
+  "short_name": "YOQR",
+  "description": "Create and scan QR codes instantly with our privacy-focused free tool. No registration required, works offline.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
       "src": "/favicon.ico",
@@ -16,6 +20,71 @@
       "src": "/favicon.svg",
       "type": "image/svg+xml",
       "sizes": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "YOQR desktop interface showing QR code generation and scanning features"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "375x667",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "YOQR mobile interface for on-the-go QR code operations"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Generate QR Code",
+      "short_name": "Generate",
+      "description": "Create a new QR code instantly",
+      "url": "/generate",
+      "icons": [
+        {
+          "src": "/favicon.svg",
+          "sizes": "any"
+        }
+      ]
+    },
+    {
+      "name": "Scan QR Code",
+      "short_name": "Scan",
+      "description": "Scan QR codes with your camera",
+      "url": "/scan",
+      "icons": [
+        {
+          "src": "/favicon.svg",
+          "sizes": "any"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
