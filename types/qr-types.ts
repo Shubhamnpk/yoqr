@@ -30,6 +30,7 @@ export interface QRGenerateOptions {
   size: number;
   backgroundColor: string;
   foregroundColor: string;
+  transparentBackground?: boolean;
   includeMargin: boolean;
   errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H';
   imageSettings: null | {
@@ -40,6 +41,8 @@ export interface QRGenerateOptions {
   };
   // Container styling
   containerStyle?: 'square' | 'rounded' | 'circle';
+  // QR module shape
+  moduleStyle?: 'square' | 'rounded' | 'circle';
   // Border and shadow
   borderWidth?: number;
   shadow?: boolean;
@@ -53,15 +56,11 @@ export interface QRGenerateOptions {
   };
   // Background pattern options
   pattern?: string | null;
-  // Animation effects
-  animation?: string | null;
   // Multiple logos support
   logos?: Array<{
     src: string;
-    position: 'center' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+    x: number;
+    y: number;
     size: number;
   }>;
-  // Export settings
-  exportFormat?: 'png' | 'svg' | 'jpeg' | 'pdf';
-  exportQuality?: number;
 }

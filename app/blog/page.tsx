@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import blogPostsData from '@/data/blog-posts.json';
+import NewsletterForm from '@/components/blog/newsletter-form';
 
 export const metadata: Metadata = {
   title: 'QR Code Blog - Tips, Tutorials & Best Practices | YOQR',
@@ -124,16 +125,7 @@ export default function BlogPage() {
           <p className="text-muted-foreground mb-6">
             Get the latest QR code tips and tutorials delivered to your inbox
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="flex-1 px-4 py-2 rounded-md border border-border bg-background"
-            />
-            <button className="px-6 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
-              Subscribe
-            </button>
-          </div>
+          <NewsletterForm />
         </div>
       </div>
     </div>

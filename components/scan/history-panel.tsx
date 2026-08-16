@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { QRCodeResult } from '@/types/qr-types';
-import { getQRTypeIcon } from '@/lib/qr-type-config';
+import { getQRTypeIcon, getQRTypeColor } from '@/lib/qr-type-config';
 
 interface HistoryPanelProps {
   history: QRCodeResult[];
@@ -75,7 +75,7 @@ export default function HistoryPanel({
   });
 
   return (
-    <div className="= bg-card/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 h-full border border-border/50">
+    <div className="bg-card/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 h-full border border-border/50">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-primary flex items-center">
           <Clock className="h-5 w-5 mr-2" />
@@ -189,7 +189,7 @@ export default function HistoryPanel({
                           <div className="flex items-center">
                             <div 
                               className={`qr-type-icon qr-type-${item.type} w-10 h-10 flex items-center justify-center rounded-lg mr-3 transition-all group-hover:scale-110`}
-                              style={{backgroundColor: `hsla(${getTypeColor(item.type)}, 0.2)`, color: `hsl(${getTypeColor(item.type)})`}}
+                              style={{backgroundColor: `hsla(${getQRTypeColor(item.type)}, 0.2)`, color: `hsl(${getQRTypeColor(item.type)})`}}
                             >
                               {getQRTypeIcon(item.type)}
                             </div>
@@ -251,18 +251,4 @@ export default function HistoryPanel({
       </div>
     </div>
   );
-}
-
-// Helper function to get color based on QR type
-function getTypeColor(type: string): string {
-  switch(type) {
-    case 'url': return '220 100% 60%';
-    case 'wifi': return '140 100% 40%';
-    case 'email': return '330 100% 60%';
-    case 'phone': return '30 100% 50%';
-    case 'sms': return '280 100% 60%';
-    case 'geo': return '0 100% 60%';
-    case 'calendar': return '160 100% 40%';
-    default: return '220 10% 60%';
-  }
 }

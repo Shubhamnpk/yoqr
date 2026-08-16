@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Camera, Upload, Smartphone } from 'lucide-react';
 import CameraScanner from './camera-scanner';
 import ImageScanner from './image-scanner';
 import { QRCodeResult } from '@/types/qr-types';
-import { Html5Qrcode } from 'html5-qrcode';
 
 // Interface for the QRScanner component props
 interface QRScannerProps {
@@ -18,80 +17,14 @@ interface QRScannerProps {
   onScanSuccess: (result: QRCodeResult) => void;
 }
 
-// Camera selector component that only shows when cameras are available
+// Camera selector component that only shows when multiple cameras are available
 interface CameraSelectorProps {
   currentCamera: string;
   setCurrentCamera: (cameraId: string) => void;
+  availableCameras: { id: string; label: string }[];
 }
 
-function CameraSelector({ currentCamera, setCurrentCamera }: CameraSelectorProps) {
-  const [availableCameras, setAvailableCameras] = useState<{id: string, label: string}[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Detect available cameras on mount
-  useEffect(() => {
-    async function detectCameras() {
-      try {
-        setLoading(true);
-        // Check if media devices are supported
-        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-          // Silent fail - will just not show camera selector
-          setLoading(false);
-          return;
-        }
-        
-        // First check if we have permission to access media devices
-        try {
-          // Request a dummy stream just to trigger permissions
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          // Stop all tracks immediately
-          stream.getTracks().forEach(track => track.stop());
-          
-          // Now get the cameras
-          const cameras = await Html5Qrcode.getCameras();
-          
-          if (cameras && cameras.length > 0) {
-            // Format camera labels to be more user-friendly
-            const formattedCameras = cameras.map(camera => {
-              let label = camera.label || `Camera ${camera.id}`;
-              
-              // Try to detect back/front camera from label
-              if (label.toLowerCase().includes('back')) {
-                label = 'Back Camera';
-              } else if (label.toLowerCase().includes('front')) {
-                label = 'Front Camera';
-              } else if (label.toLowerCase().includes('environment')) {
-                label = 'Back Camera';
-              } else if (label.toLowerCase().includes('user')) {
-                label = 'Front Camera';
-              }
-              
-              return {
-                id: camera.id,
-                label
-              };
-            });
-            
-            setAvailableCameras(formattedCameras);
-          }
-        } catch (permissionError) {
-        }
-      } catch (error) {
-      } finally {
-        setLoading(false);
-      }
-    }
-        const timer = setTimeout(() => {
-      detectCameras();
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  if (loading || availableCameras.length === 0) {
-    return null;
-  }
-  
+function CameraSelector({ currentCamera, setCurrentCamera, availableCameras }: CameraSelectorProps) {
   if (availableCameras.length <= 1) {
     return null;
   }
@@ -126,6 +59,7 @@ export default function QRScanner({
   onScanSuccess
 }: QRScannerProps) {
   const [scanMode, setScanMode] = useState<'camera' | 'image'>('camera');
+  const [availableCameras, setAvailableCameras] = useState<{ id: string; label: string }[]>([]);
 
   return (
     <div className="bg-card/80 backdrop-blur-lg rounded-2xl shadow-lg p-6 mb-6 border border-border/50">
@@ -172,11 +106,12 @@ export default function QRScanner({
             </span>
           </div>
           
-          {/* Right side: Camera Selection (Only visible when cameras are available) */}
+          {/* Right side: Camera Selection (Only visible when multiple cameras are available) */}
           {scanMode === 'camera' && (
             <CameraSelector 
               currentCamera={currentCamera} 
               setCurrentCamera={setCurrentCamera} 
+              availableCameras={availableCameras}
             />
           )}
         </div>
@@ -193,6 +128,7 @@ export default function QRScanner({
             currentCamera={currentCamera}
             setCurrentCamera={setCurrentCamera}
             onScanSuccess={onScanSuccess}
+            onCamerasLoaded={setAvailableCameras}
           />
         ) : (
           <ImageScanner onScanSuccess={onScanSuccess} />

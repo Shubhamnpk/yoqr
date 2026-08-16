@@ -41,7 +41,7 @@ export default function AboutPage() {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Technology:</span>
-              <Badge variant="outline">Next.js 14 + TypeScript</Badge>
+              <Badge variant="outline">Next.js 15 + TypeScript</Badge>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Privacy:</span>

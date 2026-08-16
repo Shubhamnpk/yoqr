@@ -10,10 +10,9 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from '@/hooks/use-toast';
 import { QRCodeResult } from '@/types/qr-types';
-import { getQRTypeIcon, getQRTypeActions } from '@/lib/qr-type-config';
+import { getQRTypeIcon, getQRTypeActions, getQRTypeColor } from '@/lib/qr-type-config';
 
 interface ResultDisplayProps {
   result: QRCodeResult | null;
@@ -796,12 +795,6 @@ function parseCalendarDetails(data: string): {key: string, value: string}[] {
   }
 }
 
-// Parse URL QR code details
-function parseUrlDetails(data: string): {url: string} {
-  return { url: data };
-}
-
-// Check if a URL is potentially safe to visit
 function isSafeUrl(url: string): boolean {
   // Basic check for valid URL format
   try {
@@ -853,121 +846,7 @@ function getDomainName(url: string): string {
 }
 
 // Format URL for display in the address bar
-function getDisplayUrl(url: string): string {
-  try {
-    const parsedUrl = new URL(url);
-    // Return protocol + domain to keep it short
-    return `${parsedUrl.protocol}//${parsedUrl.hostname}`;
-  } catch (e) {
-    return url;
-  }
-}
 
-// Get a simple description for the website
-function getUrlDescription(url: string): string {
-  try {
-    const parsedUrl = new URL(url);
-    const hostname = parsedUrl.hostname;
-    
-    // Common sites descriptions
-    const knownSites: {[key: string]: string} = {
-      'google.com': 'Search the world\'s information',
-      'facebook.com': 'Connect with friends and the world',
-      'youtube.com': 'Video sharing platform',
-      'twitter.com': 'What\'s happening in the world right now',
-      'instagram.com': 'Photo and video sharing',
-      'linkedin.com': 'Professional networking platform',
-      'github.com': 'Where the world builds software',
-      'amazon.com': 'Online shopping platform',
-      'wikipedia.org': 'The free encyclopedia',
-      'reddit.com': 'The front page of the internet'
-    };
-    
-    // Check if the hostname contains any known site
-    for (const [site, description] of Object.entries(knownSites)) {
-      if (hostname.includes(site)) {
-        return description;
-      }
-    }
-    
-    // Generic description based on TLD
-    const tld = hostname.split('.').pop()?.toLowerCase();
-    switch (tld) {
-      case 'com': return 'Commercial website';
-      case 'org': return 'Organization website';
-      case 'edu': return 'Educational institution';
-      case 'gov': return 'Government website';
-      case 'net': return 'Network organization';
-      case 'io': return 'Technology or startup website';
-      default: return 'Visit this website for more information';
-    }
-  } catch (e) {
-    return 'Website preview';
-  }
-}
-
-// Function to handle iframe loading errors
-function handleIframeError() {
-  console.error('Failed to load iframe content');
-  // This function could update state to show an error message
-  // We'd need to add state management to implement this fully
-}
-
-// Generate a simple favicon based on the first letter of the domain
-function getUrlFavicon(url: string): JSX.Element {
-  try {
-    const parsedUrl = new URL(url);
-    const domain = parsedUrl.hostname;
-    const firstLetter = domain.charAt(0).toUpperCase();
-    
-    // Get icon for known sites
-    const knownSites: {[key: string]: JSX.Element} = {
-      'google': <span className="text-xl">G</span>,
-      'youtube': <span role="img" aria-label="youtube">▶️</span>,
-      'facebook': <span className="text-xl">f</span>,
-      'twitter': <span role="img" aria-label="twitter">🐦</span>,
-      'instagram': <span role="img" aria-label="instagram">📷</span>,
-      'github': <span role="img" aria-label="github">🐙</span>,
-      'amazon': <span role="img" aria-label="amazon">📦</span>,
-      'netflix': <span className="text-xl text-red-600">N</span>,
-      'linkedin': <span className="text-xl text-blue-500">in</span>
-    };
-    
-    // Check if the domain contains any known site
-    for (const [site, icon] of Object.entries(knownSites)) {
-      if (domain.includes(site)) {
-        return (
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold">
-            {icon}
-          </div>
-        );
-      }
-    }
-    
-    // Generate background color based on domain
-    const colors = [
-      'bg-blue-100 text-blue-600',
-      'bg-green-100 text-green-600',
-      'bg-amber-100 text-amber-600',
-      'bg-purple-100 text-purple-600',
-      'bg-pink-100 text-pink-600',
-      'bg-indigo-100 text-indigo-600',
-    ];
-    
-    // Use character code to select a color deterministically
-    const colorIndex = domain.charCodeAt(0) % colors.length;
-    const colorClass = colors[colorIndex];
-    
-    return (
-      <div className={`w-12 h-12 rounded-full ${colorClass} flex items-center justify-center text-xl font-semibold shadow-sm`}>
-        {firstLetter}
-      </div>
-    );
-  } catch (e) {
-    // Fallback icon
-    return <Globe className="w-12 h-12 p-2 bg-muted rounded-full text-muted-foreground" />;
-  }
-}
 
 // Get icon background color class based on QR type
 function getIconColorClass(type: string): string {
@@ -1005,12 +884,6 @@ function getKeyIcon(key: string) {
   }
 }
 
-// Interface for toast utility to use outside component
-interface ToastUtil {
-  success: (title: string, description?: string) => void;
-  error: (title: string, description?: string) => void;
-}
-
 // Copy WiFi details to clipboard
 function copyWifiDetails(wifiData: string, toastUtil: ToastUtil) {
   try {
@@ -1019,7 +892,7 @@ function copyWifiDetails(wifiData: string, toastUtil: ToastUtil) {
     const formattedText = wifiDetails
       .map(item => `${item.key}: ${item.value}`)
       .join('\n');
-    
+
     navigator.clipboard.writeText(formattedText)
       .then(() => {
         toastUtil.success("WiFi details copied", "Network details copied to clipboard");
@@ -1038,7 +911,7 @@ function handleConnectWifi(wifiData: string, toastUtil: ToastUtil, setPasswordVi
   try {
     const ssid = wifiData.match(/S:([^;]+)/i)?.[1] || '';
     const password = wifiData.match(/P:([^;]+)/i)?.[1] || '';
-    
+
     // Check if the Web Network Information API is available (rarely supported)
     if ('networkInformation' in navigator) {
       toastUtil.success("Connection initiated", `Attempting to connect to ${ssid}`);
@@ -1046,28 +919,13 @@ function handleConnectWifi(wifiData: string, toastUtil: ToastUtil, setPasswordVi
       // Modern browsers don't allow programmatic WiFi connections for security reasons
       // Instead, create a visual guide for the user
       toastUtil.success("Connection details ready", `Open your device's WiFi settings to connect to ${ssid}`);
-      
+
       // Show the password for easy copy-paste
       setPasswordVisible(true);
     }
   } catch (err) {
     console.error('Error connecting to WiFi:', err);
     toastUtil.error("Connection failed", "Could not process WiFi connection details");
-  }
-}
-
-// Generate WiFi signal strength icon
-function getWifiSignalStrengthIcon(): JSX.Element {
-  // Randomly select a signal strength for demo purposes
-  // In a real app, this could be determined by actual signal strength if available
-  const signalStrength = Math.floor(Math.random() * 4); // 0-3
-  
-  switch(signalStrength) {
-    case 3: return <span role="img" aria-label="full signal">📶</span>; // Full
-    case 2: return <span role="img" aria-label="good signal">🔌</span>; // Good
-    case 1: return <span role="img" aria-label="fair signal">📶</span>; // Fair
-    case 0: return <span role="img" aria-label="poor signal">📡</span>; // Poor
-    default: return <span role="img" aria-label="unknown signal">📡</span>;
   }
 }
 
@@ -1090,19 +948,5 @@ function getCalendarKeyIcon(key: string) {
     case 'Location': return <MapPin className="h-4 w-4 text-blue-600" />;
     case 'Description': return <MessageSquare className="h-4 w-4 text-blue-600" />;
     default: return <FileText className="h-4 w-4 text-blue-600" />;
-  }
-}
-
-// Helper function to get color based on QR type
-function getTypeColor(type: string): string {
-  switch(type) {
-    case 'url': return '220 100% 60%';
-    case 'wifi': return '140 100% 40%';
-    case 'email': return '330 100% 60%';
-    case 'phone': return '30 100% 50%';
-    case 'sms': return '280 100% 60%';
-    case 'geo': return '0 100% 60%';
-    case 'calendar': return '160 100% 40%';
-    default: return '220 10% 60%';
   }
 }

@@ -6,7 +6,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 import YOQRStructuredData from '@/components/seo/structured-data';
-import GoogleAnalytics from '@/components/seo/analytics';
+import PwaRegister from '@/components/pwa-register';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -80,7 +80,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <Toaster />
-          <GoogleAnalytics />
+          <PwaRegister />
         </ThemeProvider>
       </body>
     </html>

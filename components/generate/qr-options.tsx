@@ -8,30 +8,36 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronUp, Settings, Sliders, Palette, Shield, Grid, Image, X, Upload, Sparkles, Layers, Download, Save, RotateCcw } from 'lucide-react';
+import { ChevronDown, ChevronUp, Settings, Sliders, Palette, Shield, Grid, Image, X, Upload, Sparkles, Layers, Download, Save, RotateCcw, Camera, FileCode, FileText } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { QRGenerateOptions } from '@/types/qr-types';
+import { getQrMatrix, buildQrSvg, drawQrToCanvas } from '@/lib/qr-render';
 
 interface QRCodeOptionsProps {
   options: QRGenerateOptions;
   onChange: (options: Partial<QRGenerateOptions>) => void;
   enabled?: boolean; // Optional flag to enable/disable the entire component
   onToggle?: (enabled: boolean) => void; // Callback when the component is toggled
+  containerClassName?: string; // Override the root container classes (e.g. when embedded in a modal)
+  defaultOpen?: boolean; // Start with the collapsible content expanded
+  onExport?: (format: 'png' | 'svg' | 'jpeg' | 'pdf') => void; // Export the current QR code in the given format
 }
 
-export default function QRCodeOptions({ options, onChange, enabled = true, onToggle }: QRCodeOptionsProps) {
+export default function QRCodeOptions({ options, onChange, enabled = true, onToggle, containerClassName, defaultOpen = false, onExport }: QRCodeOptionsProps) {
+  const rootClassName = containerClassName ?? 'bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden w-full xl:relative xl:bottom-auto xl:left-auto xl:right-auto xl:z-auto xl:mt-0 fixed bottom-0 left-0 right-0 z-10 xl:static max-h-[80vh] xl:max-h-none overflow-y-auto';
   // Component starts minimized on desktop, expanded on mobile
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const [activeTab, setActiveTab] = useState('appearance');
-  const [logoPreview, setLogoPreview] = useState<string | null>(options.imageSettings?.src || null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [savedTemplates, setSavedTemplates] = useState<any[]>([]);
   const [currentTemplate, setCurrentTemplate] = useState<string>('');
   const [multipleLogos, setMultipleLogos] = useState(options.logos || []);
-  const multipleLogoRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [dragOver, setDragOver] = useState(false);
+  const logoDropRef = useRef<HTMLInputElement>(null);
+  const [batchLines, setBatchLines] = useState('');
+  const [batchFormat, setBatchFormat] = useState<'png' | 'svg'>('png');
 
   // Load saved templates from localStorage
   useEffect(() => {
@@ -41,35 +47,79 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
     }
   }, []);
   
-  // Handle file upload for logo
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  // Handle file upload for logos
+  const addLogoFiles = (files: File[]) => {
+    const images = files.filter((file) => file.type.startsWith('image/'));
+    const remaining = Math.max(0, 4 - multipleLogos.length);
+    images.slice(0, remaining).forEach((file) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const imageSrc = event.target?.result as string;
-        setLogoPreview(imageSrc);
-        // Update options with the new logo
-        onChange({
-          imageSettings: {
-            src: imageSrc,
-            height: 30, // Default to 15% of QR code size
-            width: 30,
-            excavate: true,
-          }
+        const newLogo = {
+          src: imageSrc,
+          x: 50,
+          y: 50,
+          size: 15
+        };
+        setMultipleLogos((prev) => {
+          const updated = [...prev, newLogo];
+          onChange({ logos: updated });
+          return updated;
         });
       };
       reader.readAsDataURL(file);
-    }
+    });
   };
 
-  // Remove logo
-  const handleRemoveLogo = () => {
-    setLogoPreview(null);
-    onChange({ imageSettings: null });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBatchGenerate = () => {
+    const lines = batchLines.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return;
+    const targets = lines.slice(0, 20);
+    const stamp = Date.now();
+    targets.forEach((line, index) => {
+      const matrix = getQrMatrix(line, options.errorCorrectionLevel);
+      if (batchFormat === 'svg') {
+        const svg = buildQrSvg({
+          matrix,
+          size: options.size,
+          fgColor: options.foregroundColor,
+          gradient: options.gradient,
+          moduleStyle: options.moduleStyle,
+          pattern: options.pattern,
+          includeMargin: options.includeMargin,
+          imageSettings: options.imageSettings,
+          logos: options.logos,
+        });
+        downloadBlob(new Blob([svg], { type: 'image/svg+xml' }), `qrcode-${index + 1}-${stamp}.svg`);
+      } else {
+        const canvas = document.createElement('canvas');
+        drawQrToCanvas(canvas, {
+          matrix,
+          size: options.size,
+          fgColor: options.foregroundColor,
+          gradient: options.gradient,
+          moduleStyle: options.moduleStyle,
+          pattern: options.pattern,
+          includeMargin: options.includeMargin,
+          imageSettings: options.imageSettings,
+          logos: options.logos,
+        });
+        canvas.toBlob((blob) => {
+          if (blob) downloadBlob(blob, `qrcode-${index + 1}-${stamp}.png`);
+        }, 'image/png');
+      }
+    });
   };
 
   // If component is disabled, return minimized version with just enable toggle
@@ -92,7 +142,7 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
   }
 
   return (
-    <Card className="bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden w-full xl:relative xl:bottom-auto xl:left-auto xl:right-auto xl:z-auto xl:mt-0 fixed bottom-0 left-0 right-0 z-10 xl:static max-h-[80vh] xl:max-h-none overflow-y-auto">
+    <Card className={rootClassName}>
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 xl:hidden"></div>
       <CardHeader className={`pb-2 ${!isOpen ? 'pb-3' : ''}`}>
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -169,25 +219,11 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                       <span className="whitespace-nowrap">Size</span>
                     </TabsTrigger>
                     <TabsTrigger
-                      value="effects"
-                      className="flex items-center justify-center flex-shrink-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg text-xs sm:text-sm px-3 py-2"
-                    >
-                      <Layers className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      <span className="whitespace-nowrap">Effects</span>
-                    </TabsTrigger>
-                    <TabsTrigger
                       value="advanced"
                       className="flex items-center justify-center flex-shrink-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg text-xs sm:text-sm px-3 py-2"
                     >
                       <Shield className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       <span className="whitespace-nowrap">Advanced</span>
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="logo"
-                      className="flex items-center justify-center flex-shrink-0 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 rounded-lg text-xs sm:text-sm px-3 py-2"
-                    >
-                      <Image className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      <span className="whitespace-nowrap">Logo</span>
                     </TabsTrigger>
                     <TabsTrigger
                       value="export"
@@ -223,10 +259,25 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                           type="color"
                           value={options.backgroundColor}
                           onChange={(e) => onChange({ backgroundColor: e.target.value })}
-                          className="w-full h-8 cursor-pointer"
+                          disabled={options.transparentBackground}
+                          className={`w-full h-8 cursor-pointer ${options.transparentBackground ? 'opacity-40' : ''}`}
                         />
                       </div>
                     </div>
+                    <div className="flex items-center justify-between rounded-lg border border-border/40 bg-slate-50 dark:bg-slate-800/40 px-3 py-2">
+                      <Label className="text-xs flex items-center">
+                        <div className="w-4 h-4 rounded mr-2 border border-border overflow-hidden" style={{ background: options.transparentBackground ? 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0/8px 8px' : options.backgroundColor }} />
+                        No Background (Transparent)
+                      </Label>
+                      <Switch
+                        checked={!!options.transparentBackground}
+                        onCheckedChange={(checked) => onChange({ transparentBackground: checked })}
+                        className="data-[state=checked]:bg-blue-500 scale-75"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground -mt-2">
+                      {options.transparentBackground ? 'Only the QR code will be shown, no background fill.' : 'PNG exports keep a transparent background; JPEG/PDF fall back to white.'}
+                    </p>
                     <div className="space-y-2">
                       <Label className="text-xs">Presets</Label>
                       <div className="flex flex-wrap gap-1">
@@ -251,9 +302,130 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                         ))}
                       </div>
                     </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs flex items-center">
+                          <Layers className="h-3 w-3 mr-2 text-blue-500" />
+                          Gradient
+                        </Label>
+                        <Switch
+                          checked={options.gradient?.enabled || false}
+                          onCheckedChange={(checked) => onChange({
+                            gradient: {
+                              enabled: checked,
+                              startColor: options.gradient?.startColor || '#3B82F6',
+                              endColor: options.gradient?.endColor || '#EC4899',
+                              type: 'linear',
+                              direction: 'diagonal'
+                            }
+                          })}
+                          className="data-[state=checked]:bg-blue-500 scale-75"
+                        />
+                      </div>
+
+                      {options.gradient?.enabled && (
+                        <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-800/30 rounded-lg">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs">Start</Label>
+                              <Input
+                                type="color"
+                                value={options.gradient.startColor}
+                                onChange={(e) => onChange({
+                                  gradient: { ...options.gradient!, startColor: e.target.value }
+                                })}
+                                className="w-full h-6"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">End</Label>
+                              <Input
+                                type="color"
+                                value={options.gradient.endColor}
+                                onChange={(e) => onChange({
+                                  gradient: { ...options.gradient!, endColor: e.target.value }
+                                })}
+                                className="w-full h-6"
+                              />
+                            </div>
+                          </div>
+                          <Select
+                            value={options.gradient.type}
+                            onValueChange={(value) => onChange({
+                              gradient: { ...options.gradient!, type: value as 'linear' | 'radial' }
+                            })}
+                          >
+                            <SelectTrigger className="h-7 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="linear">Linear</SelectItem>
+                              <SelectItem value="radial">Radial</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs flex items-center">
+                        <Grid className="h-3 w-3 mr-2 text-blue-500" />
+                        Patterns
+                      </Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                        {[
+                          { name: 'None', pattern: null },
+                          { name: 'Dots', pattern: 'dots' },
+                          { name: 'Grid', pattern: 'grid' },
+                          { name: 'Diag', pattern: 'diagonal' },
+                          { name: 'Check', pattern: 'checker' },
+                          { name: 'Stripes', pattern: 'stripes' }
+                        ].map((pattern) => (
+                          <button
+                            key={pattern.name}
+                            className={`p-2 rounded text-xs transition-all ${
+                              !options.pattern || options.pattern === pattern.pattern
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-300'
+                            }`}
+                            onClick={() => onChange({ pattern: pattern.pattern })}
+                          >
+                            {pattern.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="styles" className="space-y-4 mt-0">
+                    <div className="space-y-3">
+                      <Label className="text-xs flex items-center">
+                        <Sparkles className="h-3 w-3 mr-2 text-purple-500" />
+                        Module Shape
+                      </Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {[
+                          { value: 'square', label: 'Square', desc: 'Sharp modules' },
+                          { value: 'rounded', label: 'Rounded', desc: 'Soft modules' },
+                          { value: 'circle', label: 'Dots', desc: 'Circular modules' }
+                        ].map((shape) => (
+                          <button
+                            key={shape.value}
+                            className={`p-3 rounded-lg border text-xs transition-all ${
+                              (options.moduleStyle || 'square') === shape.value
+                                ? 'bg-purple-500 text-white border-purple-500'
+                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-purple-300'
+                            }`}
+                            onClick={() => onChange({ moduleStyle: shape.value as 'square' | 'rounded' | 'circle' })}
+                          >
+                            <div className="font-medium">{shape.label}</div>
+                            <div className="text-xs opacity-75">{shape.desc}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="space-y-3">
                       <Label className="text-xs flex items-center">
                         <Sparkles className="h-3 w-3 mr-2 text-purple-500" />
@@ -311,6 +483,72 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                           className="data-[state=checked]:bg-purple-500 scale-75"
                         />
                       </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs flex items-center">
+                          <Image className="h-3 w-3 mr-2 text-blue-500" />
+                          Logos ({multipleLogos.length}/4)
+                        </Label>
+                      </div>
+
+                      <div
+                        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                        onDragLeave={() => setDragOver(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragOver(false);
+                          addLogoFiles(Array.from(e.dataTransfer.files || []));
+                        }}
+                        onClick={() => logoDropRef.current?.click()}
+                        className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+                          dragOver
+                            ? 'border-blue-500 bg-blue-500/10'
+                            : 'border-slate-300 dark:border-slate-700 hover:border-blue-400 bg-slate-50 dark:bg-slate-800/40'
+                        }`}
+                      >
+                        <Upload className="h-6 w-6 text-muted-foreground mb-2" />
+                        <p className="text-xs text-muted-foreground">Drop logo images here or click to browse</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">Then drag the logo on the QR preview to position it</p>
+                      </div>
+
+                      <input
+                        type="file"
+                        ref={logoDropRef}
+                        onChange={(e) => {
+                          addLogoFiles(Array.from(e.target.files || []));
+                          e.target.value = '';
+                        }}
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                      />
+
+                      {multipleLogos.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {multipleLogos.map((logo, index) => (
+                            <div key={index} className="relative bg-slate-100 dark:bg-slate-800/50 rounded p-1">
+                              <img
+                                src={logo.src}
+                                alt={`Logo ${index + 1}`}
+                                className="w-full h-12 object-contain rounded"
+                              />
+                              <button
+                                onClick={() => {
+                                  const updated = multipleLogos.filter((_, i) => i !== index);
+                                  setMultipleLogos(updated);
+                                  onChange({ logos: updated });
+                                }}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 text-xs"
+                                title="Remove logo"
+                              >
+                                <X className="h-2 w-2" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
 
@@ -380,129 +618,6 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="effects" className="space-y-4 mt-0">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs flex items-center">
-                          <Layers className="h-3 w-3 mr-2 text-green-500" />
-                          Gradient
-                        </Label>
-                        <Switch
-                          checked={options.gradient?.enabled || false}
-                          onCheckedChange={(checked) => onChange({
-                            gradient: {
-                              enabled: checked,
-                              startColor: options.foregroundColor,
-                              endColor: options.backgroundColor,
-                              type: 'linear',
-                              direction: 'diagonal'
-                            }
-                          })}
-                          className="data-[state=checked]:bg-green-500 scale-75"
-                        />
-                      </div>
-
-                      {options.gradient?.enabled && (
-                        <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-800/30 rounded-lg">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <div>
-                              <Label className="text-xs">Start</Label>
-                              <Input
-                                type="color"
-                                value={options.gradient.startColor}
-                                onChange={(e) => onChange({
-                                  gradient: { ...options.gradient!, startColor: e.target.value }
-                                })}
-                                className="w-full h-6"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-xs">End</Label>
-                              <Input
-                                type="color"
-                                value={options.gradient.endColor}
-                                onChange={(e) => onChange({
-                                  gradient: { ...options.gradient!, endColor: e.target.value }
-                                })}
-                                className="w-full h-6"
-                              />
-                            </div>
-                          </div>
-                          <Select
-                            value={options.gradient.type}
-                            onValueChange={(value) => onChange({
-                              gradient: { ...options.gradient!, type: value as 'linear' | 'radial' }
-                            })}
-                          >
-                            <SelectTrigger className="h-7 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="linear">Linear</SelectItem>
-                              <SelectItem value="radial">Radial</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-xs flex items-center">
-                        <Grid className="h-3 w-3 mr-2 text-green-500" />
-                        Patterns
-                      </Label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-                        {[
-                          { name: 'None', pattern: null },
-                          { name: 'Dots', pattern: 'dots' },
-                          { name: 'Grid', pattern: 'grid' },
-                          { name: 'Diag', pattern: 'diagonal' },
-                          { name: 'Check', pattern: 'checker' },
-                          { name: 'Stripes', pattern: 'stripes' }
-                        ].map((pattern) => (
-                          <button
-                            key={pattern.name}
-                            className={`p-2 rounded text-xs transition-all ${
-                              !options.pattern || options.pattern === pattern.pattern
-                                ? 'bg-green-500 text-white'
-                                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-green-300'
-                            }`}
-                            onClick={() => onChange({ pattern: pattern.pattern })}
-                          >
-                            {pattern.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-xs flex items-center">
-                        <Sparkles className="h-3 w-3 mr-2 text-green-500" />
-                        Effects
-                      </Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                        {[
-                          { name: 'None', effect: null },
-                          { name: 'Pulse', effect: 'pulse' },
-                          { name: 'Glow', effect: 'glow' },
-                          { name: 'Scan', effect: 'scan' }
-                        ].map((effect) => (
-                          <button
-                            key={effect.name}
-                            className={`p-2 rounded text-xs transition-all ${
-                              !options.animation || options.animation === effect.effect
-                                ? 'bg-green-500 text-white'
-                                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-green-300'
-                            }`}
-                            onClick={() => onChange({ animation: effect.effect })}
-                          >
-                            {effect.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </TabsContent>
-
                   <TabsContent value="advanced" className="space-y-6 mt-0">
                     {/* Error Correction Level */}
                     <div className="space-y-2">
@@ -538,171 +653,6 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                         Error correction allows a QR code to be read even when partially damaged or obscured.
                         Higher levels provide more redundancy but create larger codes.
                       </p>
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="logo" className="space-y-4 mt-0">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs flex items-center">
-                          <Layers className="h-3 w-3 mr-2 text-blue-500" />
-                          Logos ({multipleLogos.length}/4)
-                        </Label>
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            if (multipleLogos.length < 4) {
-                              const newRef = multipleLogoRefs.current[multipleLogos.length];
-                              newRef?.click();
-                            }
-                          }}
-                          disabled={multipleLogos.length >= 4}
-                          className="h-6 px-2 text-xs bg-blue-500 hover:bg-blue-600"
-                        >
-                          <Upload className="h-3 w-3 mr-1" />
-                          Add
-                        </Button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {multipleLogos.map((logo, index) => (
-                          <div key={index} className="relative bg-slate-100 dark:bg-slate-800/50 rounded p-1">
-                            <img
-                              src={logo.src}
-                              alt={`Logo ${index + 1}`}
-                              className="w-full h-12 object-contain rounded"
-                            />
-                            <div className="absolute -top-1 -right-1 flex gap-0.5">
-                              <Select
-                                value={logo.position}
-                                onValueChange={(position) => {
-                                  const updated = [...multipleLogos];
-                                  updated[index].position = position as any;
-                                  setMultipleLogos(updated);
-                                  onChange({ logos: updated });
-                                }}
-                              >
-                                <SelectTrigger className="h-4 w-4 p-0 bg-white dark:bg-slate-700 text-xs">
-                                  <span className="text-xs">📍</span>
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="center">C</SelectItem>
-                                  <SelectItem value="top-left">TL</SelectItem>
-                                  <SelectItem value="top-right">TR</SelectItem>
-                                  <SelectItem value="bottom-left">BL</SelectItem>
-                                  <SelectItem value="bottom-right">BR</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <button
-                                onClick={() => {
-                                  const updated = multipleLogos.filter((_, i) => i !== index);
-                                  setMultipleLogos(updated);
-                                  onChange({ logos: updated });
-                                }}
-                                className="bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 text-xs"
-                                title='remove logo'
-                              >
-                                <X className="h-2 w-2" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-
-                        {Array.from({ length: Math.max(0, 4 - multipleLogos.length) }).map((_, index) => (
-                          <div
-                            key={`empty-${index}`}
-                            className="bg-slate-100 dark:bg-slate-800/50 rounded p-3 flex flex-col items-center justify-center h-14 border border-dashed border-slate-300 dark:border-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700/50"
-                            onClick={() => {
-                              const refIndex = multipleLogos.length + index;
-                              multipleLogoRefs.current[refIndex]?.click();
-                            }}
-                          >
-                            <Upload className="h-4 w-4 text-slate-400" />
-                          </div>
-                        ))}
-                      </div>
-
-                      {Array.from({ length: 4 }).map((_, index) => (
-                        <input
-                          key={index}
-                          title='input file'
-                          type="file"
-                          ref={(el) => (multipleLogoRefs.current[index] = el)}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = (event) => {
-                                const imageSrc = event.target?.result as string;
-                                const newLogo = {
-                                  src: imageSrc,
-                                  position: 'center' as const,
-                                  size: 15
-                                };
-                                const updated = [...multipleLogos, newLogo];
-                                setMultipleLogos(updated);
-                                onChange({ logos: updated });
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                          accept="image/*"
-                          className="hidden"
-                        />
-                      ))}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs flex items-center">
-                          <Image className="h-3 w-3 mr-2 text-blue-500" />
-                          Center Logo
-                        </Label>
-                        <Switch
-                          checked={!!logoPreview}
-                          onCheckedChange={(checked) => {
-                            if (!checked) {
-                              handleRemoveLogo();
-                            } else if (fileInputRef.current) {
-                              fileInputRef.current.click();
-                            }
-                          }}
-                          className="data-[state=checked]:bg-blue-500 scale-75"
-                        />
-                      </div>
-
-                      {logoPreview ? (
-                        <div className="relative bg-slate-100 dark:bg-slate-800/50 rounded p-1">
-                          <img
-                            src={logoPreview}
-                            alt="Center logo"
-                            className="w-full h-16 object-contain rounded"
-                          />
-                          <button
-                            title='remove logo'
-                            onClick={handleRemoveLogo}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
-                          >
-                            <X className="h-2 w-2" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div
-                          className="bg-slate-100 dark:bg-slate-800/50 rounded p-2 flex items-center justify-center h-16 border border-dashed border-slate-300 dark:border-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700/50"
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          <Upload className="h-4 w-4 text-slate-400" />
-                        </div>
-                      )}
-
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        title='input file'
-                        onChange={handleLogoUpload}
-                        accept="image/*"
-                        className="hidden"
-                      />
                     </div>
                   </TabsContent>
 
@@ -779,13 +729,14 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                       </Label>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
                         {[
-                          { format: 'PNG', icon: '🖼️' },
-                          { format: 'SVG', icon: '📐' },
-                          { format: 'JPEG', icon: '📷' },
-                          { format: 'PDF', icon: '📄' }
+                          { format: 'PNG', icon: <Image className="h-4 w-4 mx-auto mb-0.5" /> },
+                          { format: 'SVG', icon: <FileCode className="h-4 w-4 mx-auto mb-0.5" /> },
+                          { format: 'JPEG', icon: <Camera className="h-4 w-4 mx-auto mb-0.5" /> },
+                          { format: 'PDF', icon: <FileText className="h-4 w-4 mx-auto mb-0.5" /> }
                         ].map((exportOption) => (
                           <button
                             key={exportOption.format}
+                            onClick={() => onExport?.(exportOption.format.toLowerCase() as 'png' | 'svg' | 'jpeg' | 'pdf')}
                             className="p-2 rounded border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 text-xs transition-all"
                           >
                             <div className="text-sm mb-0.5">{exportOption.icon}</div>
@@ -803,10 +754,12 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                       <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 space-y-2">
                         <Textarea
                           placeholder="One URL per line..."
+                          value={batchLines}
+                          onChange={(e) => setBatchLines(e.target.value)}
                           className="min-h-[60px] resize-none text-xs"
                         />
                         <div className="flex justify-between items-center">
-                          <Select defaultValue="png">
+                          <Select value={batchFormat} onValueChange={(value) => setBatchFormat(value as 'png' | 'svg')}>
                             <SelectTrigger className="h-6 w-20 text-xs">
                               <SelectValue />
                             </SelectTrigger>
@@ -815,7 +768,7 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                               <SelectItem value="svg">SVG</SelectItem>
                             </SelectContent>
                           </Select>
-                          <Button className="h-6 px-2 text-xs bg-blue-500 hover:bg-blue-600">
+                          <Button className="h-6 px-2 text-xs bg-blue-500 hover:bg-blue-600" onClick={handleBatchGenerate}>
                             Generate
                           </Button>
                         </div>
@@ -829,6 +782,7 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                           size: 200,
                           backgroundColor: '#ffffff',
                           foregroundColor: '#000000',
+                          transparentBackground: false,
                           includeMargin: true,
                           errorCorrectionLevel: 'M',
                           imageSettings: null,
@@ -836,8 +790,7 @@ export default function QRCodeOptions({ options, onChange, enabled = true, onTog
                           borderWidth: 0,
                           shadow: false,
                           gradient: { enabled: false, startColor: '#000000', endColor: '#ffffff', type: 'linear' },
-                          pattern: null,
-                          animation: null
+                          pattern: null
                         });
                       }}
                       className="w-full h-7 text-xs"

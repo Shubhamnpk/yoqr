@@ -8,7 +8,6 @@ import ResultDisplay from '@/components/scan/result-display';
 import HistoryPanel from '@/components/scan/history-panel';
 import QRCodeGenerator from '@/components/generate/qr-generator';
 import QRCodePreview from '@/components/generate/qr-preview';
-import QRCodeOptions from '@/components/generate/qr-options';
 import { QRCodeResult, QRContentType, QRGenerateOptions } from '@/types/qr-types';
 
 export default function Home() {
@@ -27,6 +26,7 @@ export default function Home() {
     size: 200,
     backgroundColor: '#ffffff',
     foregroundColor: '#000000',
+    transparentBackground: false,
     includeMargin: true,
     errorCorrectionLevel: 'M',
     imageSettings: null
@@ -77,6 +77,30 @@ export default function Home() {
       ...prevOptions,
       ...newOptions
     }));
+  };
+
+  // Handle export CSV
+  const handleExportCSV = () => {
+    if (history.length === 0) return;
+
+    const csvContent = [
+      ['Type', 'Data', 'Timestamp'].join(','),
+      ...history.map(item => [
+        item.type,
+        `"${item.data.replace(/"/g, '""')}"`,
+        item.timestamp
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `qr-scan-history-${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -133,9 +157,7 @@ export default function Home() {
                 setCurrentFilter={setCurrentFilter}
                 onSelectItem={setScanResult}
                 onClearHistory={() => setHistory([])}
-                onExportCSV={() => {
-                  // Export functionality
-                }}
+                onExportCSV={handleExportCSV}
               />
             </>
           ) : (
@@ -150,19 +172,13 @@ export default function Home() {
                 />
               </div>
               
-              {/* Preview & Options */}
+              {/* Preview & Customize */}
               <div className="lg:col-span-1">
                 <QRCodePreview 
                   content={content}
                   options={options}
+                  onOptionsChange={handleOptionsChange}
                 />
-                
-                <div className="mt-6">
-                  <QRCodeOptions 
-                    options={options}
-                    onChange={handleOptionsChange}
-                  />
-                </div>
               </div>
             </>
           )}

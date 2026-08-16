@@ -2,11 +2,12 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, Clock, Share2, Bookmark } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import blogPostsData from '@/data/blog-posts.json';
 import { renderMarkdownToHtml } from '@/lib/markdown';
+import PostActions from '@/components/blog/post-actions';
+import NewsletterForm from '@/components/blog/newsletter-form';
 
 type BlogPost = {
   id: string;
@@ -111,16 +112,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Bookmark className="w-4 h-4 mr-2" />
-                  Save
-                </Button>
-              </div>
+              <PostActions title={post.title} url={`https://yoqr.netlify.app/blog/${slug}`} />
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2">
@@ -188,14 +180,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-2 rounded-md border border-border bg-background"
-              />
-              <Button>Subscribe</Button>
-            </div>
+            <NewsletterForm />
           </CardContent>
         </Card>
       </div>
