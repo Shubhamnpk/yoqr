@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import QRScanner from '@/components/scan/qr-scanner';
 import ResultDisplay from '@/components/scan/result-display';
 import HistoryPanel from '@/components/scan/history-panel';
@@ -14,11 +14,36 @@ export default function ScanPage() {
   const [scanHistory, setScanHistory] = useState<QRCodeResult[]>([]);
   const [currentFilter, setCurrentFilter] = useState('all');
 
+  // Load history from localStorage on mount
+  useEffect(() => {
+    const storedHistory = localStorage.getItem('qrScanHistory');
+    if (storedHistory) {
+      try {
+        const parsedHistory = JSON.parse(storedHistory);
+        if (Array.isArray(parsedHistory)) {
+          setScanHistory(parsedHistory.slice(0, 100));
+        }
+      } catch (e) {
+        console.error("Error loading history:", e);
+        localStorage.removeItem('qrScanHistory');
+      }
+    }
+  }, []);
+
+  // Save history to localStorage when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('qrScanHistory', JSON.stringify(scanHistory));
+    } catch (e) {
+      console.error("Error saving history:", e);
+    }
+  }, [scanHistory]);
+
   // Handle successful scan
   const handleScanSuccess = (result: QRCodeResult) => {
     setScanResult(result);
     setIsScanning(continuousScan);
-    setScanHistory(prev => [result, ...prev]);
+    setScanHistory(prev => [result, ...prev].slice(0, 100));
   };
 
   // Handle clear history

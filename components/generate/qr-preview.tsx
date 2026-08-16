@@ -1,51 +1,27 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
-import QRCode from 'qrcode.react';
-import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Share2, Copy, Check, Image, QrCode, Smartphone, Loader2, Settings, ZoomIn, ZoomOut, RotateCcw, Info, Sparkles } from 'lucide-react';
+import { Download, Share2, Copy, Check, Image, QrCode, Smartphone, Loader2, Settings, ZoomIn, ZoomOut, RotateCcw, Info, Sparkles, ChevronDown, Camera, FileCode, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { QRGenerateOptions } from '@/types/qr-types';
+import { buildQrSvg, buildPdf, getQrMatrix, renderExportCanvas } from '@/lib/qr-render';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import CustomizationModal from '@/components/generate/customization-modal';
+import CustomQRCode from '@/components/generate/custom-qr';
 
-// Add custom CSS animations
-const customStyles = `
-  @keyframes qr-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-
-  @keyframes qr-glow {
-    0%, 100% { filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.3)); }
-    50% { filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.6)); }
-  }
-
-  .qr-pulse-animation {
-    animation: qr-pulse 2s infinite;
-  }
-
-  .qr-glow-animation {
-    animation: qr-glow 3s infinite;
-  }
-`;
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement('style');
-  styleSheet.textContent = customStyles;
-  document.head.appendChild(styleSheet);
-}
 
 
 interface QRCodePreviewProps {
   content: string;
   options: QRGenerateOptions;
-  onToggleCustomization?: () => void;
+  onOptionsChange: (options: Partial<QRGenerateOptions>) => void;
 }
 
-export default function QRCodePreview({ content, options, onToggleCustomization }: QRCodePreviewProps) {
+export default function QRCodePreview({ content, options, onOptionsChange }: QRCodePreviewProps) {
   const [qrValue, setQrValue] = useState('');
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -53,8 +29,22 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
   const [isGenerating, setIsGenerating] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showStats, setShowStats] = useState(false);
+  const [customizationOpen, setCustomizationOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Close the export menu when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setExportOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   
   // Update QR value when content changes
@@ -105,23 +95,11 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
     
     try {
       setDownloading(true);
-      const qrContainer = qrRef.current;
-      if (!qrContainer) return;
+      const canvas = await renderExportCanvas(qrValue, options, 2);
 
-      const canvas = await html2canvas(qrContainer, {
-        backgroundColor: options.gradient?.enabled ? null : options.backgroundColor,
-        scale: 2,
-        useCORS: true,
-        allowTaint: true
-      });
+      const blob = await canvasToBlob(canvas, 'image/png');
+      triggerDownload(blob, `qrcode-${new Date().getTime()}.png`);
 
-      const link = document.createElement('a');
-      link.download = `qrcode-${new Date().getTime()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
       toast({
         title: "QR Code downloaded",
         description: "Your QR code has been saved",
@@ -149,6 +127,104 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
       setDownloading(false);
     }
   };
+
+  // Export QR code in a chosen format (PNG, SVG, JPEG, PDF)
+  const exportQR = async (format: 'png' | 'svg' | 'jpeg' | 'pdf') => {
+    if (!content) {
+      toast({
+        title: "Cannot export empty QR code",
+        description: "Please enter some content first",
+        variant: "destructive",
+        className: "bg-card/90 backdrop-blur-lg border border-border/50 shadow-lg",
+        style: {
+          color: 'var(--foreground)',
+          borderRadius: '0.75rem'
+        }
+      });
+      return;
+    }
+
+    try {
+      setDownloading(true);
+
+      if (format === 'svg') {
+        const svg = buildQrSvg({
+          matrix: getQrMatrix(qrValue, options.errorCorrectionLevel),
+          size: options.size,
+          fgColor: options.foregroundColor,
+          gradient: options.gradient,
+          moduleStyle: options.moduleStyle,
+          pattern: options.pattern,
+          includeMargin: options.includeMargin,
+          imageSettings: options.imageSettings,
+          logos: options.logos
+        });
+        triggerDownload(new Blob([svg], { type: 'image/svg+xml' }), `qrcode-${new Date().getTime()}.svg`);
+      } else {
+        const opaque = format === 'jpeg' || format === 'pdf';
+        const canvas = await renderExportCanvas(qrValue, options, 2, opaque);
+
+        if (format === 'png') {
+          const blob = await canvasToBlob(canvas, 'image/png');
+          triggerDownload(blob, `qrcode-${new Date().getTime()}.png`);
+        } else if (format === 'jpeg') {
+          const blob = await canvasToBlob(canvas, 'image/jpeg', 0.95);
+          triggerDownload(blob, `qrcode-${new Date().getTime()}.jpg`);
+        } else if (format === 'pdf') {
+          const blob = await canvasToBlob(canvas, 'image/jpeg', 0.95);
+          const bytes = new Uint8Array(await blob.arrayBuffer());
+          const pdf = buildPdf(bytes, canvas.width, canvas.height);
+          triggerDownload(new Blob([pdf], { type: 'application/pdf' }), `qrcode-${new Date().getTime()}.pdf`);
+        }
+      }
+
+      setExportOpen(false);
+      toast({
+        title: "QR Code exported",
+        description: `Your QR code has been saved as ${format.toUpperCase()}`,
+        variant: "default",
+        className: "bg-card/90 backdrop-blur-lg border border-border/50 shadow-lg",
+        style: {
+          color: 'var(--foreground)',
+          borderRadius: '0.75rem'
+        }
+      });
+    } catch (err) {
+      console.error('Error exporting QR code:', err);
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting the QR code",
+        variant: "destructive",
+        className: "bg-card/90 backdrop-blur-lg border border-border/50 shadow-lg",
+        style: {
+          color: 'var(--foreground)',
+          borderRadius: '0.75rem'
+        }
+      });
+    } finally {
+      setTimeout(() => setDownloading(false), 300);
+    }
+  };
+
+  const canvasToBlob = (canvas: HTMLCanvasElement, type: string, quality?: number) =>
+    new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error('Failed to convert canvas to blob'))),
+        type,
+        quality
+      );
+    });
+
+  const triggerDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
   
   // Copy QR code as data URL
   const copyQR = async () => {
@@ -167,15 +243,7 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
     }
     
     try {
-      const qrContainer = qrRef.current;
-      if (!qrContainer) return;
-
-      const canvas = await html2canvas(qrContainer, {
-        backgroundColor: options.gradient?.enabled ? null : options.backgroundColor,
-        scale: 2,
-        useCORS: true,
-        allowTaint: true
-      });
+      const canvas = await renderExportCanvas(qrValue, options, 2);
 
       const dataUrl = canvas.toDataURL('image/png');
       navigator.clipboard.writeText(dataUrl);
@@ -298,13 +366,17 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
           <div
             className="flex justify-center items-center p-6 rounded-xl shadow-inner transition-all duration-300 relative overflow-hidden"
             style={{
-              minHeight: `${Math.min(options.size + 40, 400)}px`,
-              background: options.gradient?.enabled
-                ? `linear-gradient(${options.gradient.direction === 'diagonal' ? '45deg' : options.gradient.direction === 'vertical' ? '180deg' : '90deg'}, ${options.gradient.startColor}, ${options.gradient.endColor})`
+              minHeight: options.containerStyle === 'circle' ? undefined : `${Math.min(options.size + 40, 400)}px`,
+              width: '100%',
+              maxWidth: options.containerStyle === 'circle' ? `${Math.min(options.size + 40, 400)}px` : undefined,
+              marginInline: options.containerStyle === 'circle' ? 'auto' : undefined,
+              aspectRatio: options.containerStyle === 'circle' ? '1' : undefined,
+              background: options.transparentBackground
+                ? 'repeating-conic-gradient(#f1f5f9 0% 25%, transparent 0% 50%) 0 0 / 16px 16px'
                 : options.backgroundColor,
               borderRadius: options.containerStyle === 'circle' ? '50%' :
-                           options.containerStyle === 'rounded' ? '16px' : '8px',
-              border: options.borderWidth ? `${options.borderWidth}px solid ${options.foregroundColor}` : 'none',
+                           options.containerStyle === 'rounded' ? '16px' : '0',
+              border: options.borderWidth ? `${options.borderWidth}px solid ${options.foregroundColor}` : '1px solid hsl(var(--border))',
               boxShadow: options.shadow ? '0 10px 25px rgba(0, 0, 0, 0.15)' : 'none'
             }}
             onMouseEnter={() => setIsHovering(true)}
@@ -327,79 +399,26 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
                 </div>
               ) : (
                 <div
-                  className={`qr-container transition-all duration-300 relative ${isHovering ? 'scale-105' : 'scale-100'} ${
-                    options.animation === 'pulse' ? 'qr-pulse-animation' :
-                    options.animation === 'glow' ? 'qr-glow-animation' : ''
-                  }`}
+                  className={`qr-container transition-all duration-300 relative ${isHovering ? 'scale-105' : 'scale-100'}`}
                   style={{
                     transform: `scale(${zoomLevel})`,
                     transformOrigin: 'center',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    maxWidth: '100%'
                   }}
                 >
-                <QRCode
-                  id="qr-canvas"
+                <CustomQRCode
                   value={qrValue}
                   size={options.size}
-                  bgColor="transparent"
                   fgColor={options.foregroundColor}
                   level={options.errorCorrectionLevel}
                   includeMargin={options.includeMargin}
-                  imageSettings={options.imageSettings || undefined}
-                  renderAs="canvas"
+                  gradient={options.gradient}
+                  moduleStyle={options.moduleStyle}
+                  pattern={options.pattern}
+                  imageSettings={options.imageSettings}
+                  logos={options.logos}
                 />
-
-                {/* Pattern Overlay */}
-                {options.pattern && options.pattern !== 'none' && (
-                  <div
-                    className="absolute inset-0 pointer-events-none opacity-10"
-                    style={{
-                      backgroundImage: options.pattern === 'dots' ? 'radial-gradient(circle, currentColor 1px, transparent 1px)' :
-                                     options.pattern === 'grid' ? 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)' :
-                                     options.pattern === 'diagonal' ? 'repeating-linear-gradient(45deg, currentColor 1px, currentColor 1px 2px, transparent 2px, transparent 4px)' :
-                                     options.pattern === 'checker' ? 'repeating-conic-gradient(currentColor 0% 25%, transparent 25% 50%)' :
-                                     options.pattern === 'stripes' ? 'repeating-linear-gradient(90deg, currentColor 1px, transparent 1px 4px)' :
-                                     'none',
-                      backgroundSize: options.pattern === 'dots' ? '4px 4px' :
-                                    options.pattern === 'grid' ? '8px 8px' :
-                                    options.pattern === 'diagonal' ? '6px 6px' :
-                                    options.pattern === 'checker' ? '8px 8px' :
-                                    '6px 6px'
-                    }}
-                  />
-                )}
-
-                {/* Multiple Logos Overlay */}
-                {options.logos && options.logos.length > 0 && (
-                  <div className="absolute inset-0 pointer-events-none">
-                    {options.logos.map((logo, index) => (
-                      <img
-                        key={index}
-                        src={logo.src}
-                        alt={`Logo ${index + 1}`}
-                        className="absolute object-contain"
-                        style={{
-                          width: `${(options.size * logo.size) / 100}px`,
-                          height: `${(options.size * logo.size) / 100}px`,
-                          left: logo.position === 'center' ? '50%' :
-                                logo.position === 'top-left' ? '10%' :
-                                logo.position === 'top-right' ? '80%' :
-                                logo.position === 'bottom-left' ? '10%' :
-                                logo.position === 'bottom-right' ? '80%' : '50%',
-                          top: logo.position === 'center' ? '50%' :
-                               logo.position === 'top-left' ? '10%' :
-                               logo.position === 'top-right' ? '10%' :
-                               logo.position === 'bottom-left' ? '80%' :
-                               logo.position === 'bottom-right' ? '80%' : '50%',
-                          transform: logo.position === 'center' ? 'translate(-50%, -50%)' :
-                                   logo.position.includes('left') ? 'translateX(-10%)' :
-                                   logo.position.includes('right') ? 'translateX(-90%)' :
-                                   'translate(-50%, -50%)'
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
                 </div>
               )}
 
@@ -459,30 +478,80 @@ export default function QRCodePreview({ content, options, onToggleCustomization 
           </div>
         </div>
       </CardContent>
-      <CardFooter className="pt-4 pb-6 px-6">
-        <div className="flex gap-3 w-full">
+      <CardFooter className="pt-3 pb-4 px-4">
+        <div className="flex gap-2 w-full">
           <Button
             variant="outline"
-            size="lg"
-            onClick={copyQR}
-            disabled={!content}
-            className={`transition-all duration-300 flex-1 ${copied ? 'bg-green-500/10 text-green-500 border-green-500/30' : ''}`}
+            size="sm"
+            onClick={() => setCustomizationOpen(true)}
+            className="transition-all duration-300 flex-1"
           >
-            {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-            {copied ? 'Copied!' : 'Copy'}
+            <Settings className="h-3.5 w-3.5 mr-1.5" />
+            Customize
           </Button>
 
-          <Button
-            size="lg"
-            onClick={downloadQR}
-            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white flex-1"
-            disabled={!content || downloading}
-          >
-            {downloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-            {downloading ? 'Downloading...' : 'Download'}
-          </Button>
+          <div className="relative flex-1" ref={exportMenuRef}>
+            <div className="flex overflow-hidden rounded-md">
+              <Button
+                size="sm"
+                onClick={() => exportQR('png')}
+                disabled={!content || downloading}
+                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-r-none"
+              >
+                {downloading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}
+                {downloading ? 'Downloading...' : 'Download'}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setExportOpen((open) => !open)}
+                disabled={!content || downloading}
+                aria-label="More options"
+                className="px-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-l-none border-l border-white/30"
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+
+            {exportOpen && (
+              <div className="absolute bottom-full mb-2 right-0 w-48 rounded-lg border border-border/50 bg-card shadow-xl overflow-hidden z-50">
+                <button
+                  onClick={() => { setExportOpen(false); copyQR(); }}
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors text-left ${copied ? 'text-green-500' : ''}`}
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied ? 'Copied!' : 'Copy as image'}
+                </button>
+                <div className="my-1 border-t border-border/50" />
+                <div className="px-3 pt-1 pb-1 text-[10px] uppercase tracking-wide text-muted-foreground">Export as</div>
+                {[
+                  { format: 'png', label: 'PNG', icon: <Image className="h-4 w-4" /> },
+                  { format: 'svg', label: 'SVG', icon: <FileCode className="h-4 w-4" /> },
+                  { format: 'jpeg', label: 'JPEG', icon: <Camera className="h-4 w-4" /> },
+                  { format: 'pdf', label: 'PDF', icon: <FileText className="h-4 w-4" /> }
+                ].map((option) => (
+                  <button
+                    key={option.format}
+                    onClick={() => exportQR(option.format as 'png' | 'svg' | 'jpeg' | 'pdf')}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors text-left"
+                  >
+                    {option.icon}
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </CardFooter>
+
+      <CustomizationModal
+        open={customizationOpen}
+        onOpenChange={setCustomizationOpen}
+        content={content}
+        options={options}
+        onChange={onOptionsChange}
+        onExport={exportQR}
+      />
     </Card>
   );
 }

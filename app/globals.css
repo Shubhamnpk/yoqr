@@ -150,3 +150,60 @@
     animation: scan 2s linear infinite;
   }
 }
+
+/* Fullscreen customization modal animations - slide up on open, slide down on close */
+@keyframes yoqr-modal-in {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes yoqr-modal-out {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+@keyframes yoqr-overlay-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes yoqr-overlay-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.yoqr-modal[data-state='open'] {
+  animation: yoqr-modal-in 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.yoqr-modal[data-state='closed'] {
+  animation: yoqr-modal-out 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.yoqr-modal-overlay[data-state='open'] {
+  animation: yoqr-overlay-in 0.4s ease-out;
+}
+
+.yoqr-modal-overlay[data-state='closed'] {
+  animation: yoqr-overlay-out 0.32s ease-in forwards;
+}

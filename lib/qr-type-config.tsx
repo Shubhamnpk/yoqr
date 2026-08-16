@@ -137,3 +137,17 @@ export const getQRTypeActions = (type: string, data: string): QRTypeAction[] => 
       return []; // No special actions for plain text
   }
 };
+
+// Get accent color (HSL triple) for a QR type
+export const getQRTypeColor = (type: string): string => {
+  switch (type) {
+    case 'url': return '220 100% 60%';
+    case 'wifi': return '140 100% 40%';
+    case 'email': return '330 100% 60%';
+    case 'phone': return '30 100% 50%';
+    case 'sms': return '280 100% 60%';
+    case 'geo': return '0 100% 60%';
+    case 'calendar': return '160 100% 40%';
+    default: return '220 10% 60%';
+  }
+};

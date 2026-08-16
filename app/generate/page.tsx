@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import QRCodeGenerator from '@/components/generate/qr-generator';
 import QRCodePreview from '@/components/generate/qr-preview';
-import QRCodeOptions from '@/components/generate/qr-options';
 import { QRGenerateOptions, QRContentType } from '@/types/qr-types';
 import { QrCode, ArrowRight } from 'lucide-react';
 
@@ -12,11 +11,11 @@ export default function GeneratePage() {
   // Generator state
   const [content, setContent] = useState('');
   const [contentType, setContentType] = useState<QRContentType>('url');
-  const [showCustomization, setShowCustomization] = useState(true);
   const [options, setOptions] = useState<QRGenerateOptions>({
     size: 200,
     backgroundColor: '#ffffff',
     foregroundColor: '#000000',
+    transparentBackground: false,
     includeMargin: true,
     errorCorrectionLevel: 'M',
     imageSettings: null
@@ -44,9 +43,9 @@ export default function GeneratePage() {
         </div>
 
         {/* Mobile-first layout */}
-        <div className="space-y-4 sm:space-y-6">
-          {/* Generator form - Full width on mobile */}
-          <Card className="bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[62fr_38fr] gap-4 sm:gap-6 items-start">
+          {/* Generator form - Full width on mobile, left column on desktop */}
+          <Card className="min-w-0 bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg rounded-xl overflow-hidden">
             <QRCodeGenerator
               content={content}
               setContent={setContent}
@@ -55,26 +54,13 @@ export default function GeneratePage() {
             />
           </Card>
 
-          {/* Preview and Options - Desktop optimized layout */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
-            {/* Preview section - Takes up 1 column on desktop (narrower) */}
-            <div className="xl:col-span-1 order-1">
-              <QRCodePreview
-                content={content}
-                options={options}
-                onToggleCustomization={() => setShowCustomization(!showCustomization)}
-              />
-            </div>
-
-            {/* Options section - Takes up 2 columns on desktop (wider) */}
-            <div className="xl:col-span-2 order-2">
-              <QRCodeOptions
-                options={options}
-                onChange={handleOptionsChange}
-                enabled={showCustomization}
-                onToggle={setShowCustomization}
-              />
-            </div>
+          {/* Preview and Customize - Sticky on desktop */}
+          <div className="lg:sticky lg:top-24 min-w-0">
+            <QRCodePreview
+              content={content}
+              options={options}
+              onOptionsChange={handleOptionsChange}
+            />
           </div>
         </div>
 

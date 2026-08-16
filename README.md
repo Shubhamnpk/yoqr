@@ -17,7 +17,7 @@ A modern, privacy-focused QR code generator and scanner built with Next.js, Type
   - Logo embedding (multiple logos supported)
   - Animations (Pulse, Glow, Scan effects)
 - **Real-time Preview**: See changes instantly
-- **High-Resolution Export**: PNG, SVG, JPEG formats
+- **High-Resolution Export**: PNG, SVG, JPEG, and PDF formats
 - **Template System**: Save and load custom templates
 
 ### QR Code Scanning

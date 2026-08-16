@@ -242,7 +242,7 @@ export default function ImageScanner({ onScanSuccess }: ImageScannerProps) {
   // Play success sound
   const playScanSuccessSound = () => {
     try {
-      const audio = new Audio('/sounds/scan-success.mp3');
+      const audio = new Audio('/sounds/scan-success.wav');
       audio.volume = 0.5;
       audio.play().catch(err => {
         // Ignore errors from autoplay restrictions

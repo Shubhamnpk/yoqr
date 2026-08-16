@@ -1,6 +1,41 @@
 {
   "versions": [
     {
+      "version": "1.5.2",
+      "date": "2026-02-20",
+      "type": "minor",
+      "changes": [
+        {
+          "type": "feature",
+          "description": "Add blog section with index and dynamic post pages"
+        },
+        {
+          "type": "feature",
+          "description": "Add JSON-LD structured data for better SEO"
+        },
+        {
+          "type": "feature",
+          "description": "Integrate Google Analytics"
+        },
+        {
+          "type": "improvement",
+          "description": "Enhance PWA manifest with categories, shortcuts, screenshots, and improved icon support"
+        },
+        {
+          "type": "improvement",
+          "description": "Update sitemap to include blog pages"
+        },
+        {
+          "type": "improvement",
+          "description": "Add Tailwind CSS Typography plugin for improved article styling"
+        },
+        {
+          "type": "improvement",
+          "description": "Harden security and performance defaults via Next.js headers and config optimizations"
+        }
+      ]
+    },
+    {
       "version": "1.5.1",
       "date": "2025-11-02",
       "type": "minor",

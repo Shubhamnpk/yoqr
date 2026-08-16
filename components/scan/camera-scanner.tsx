@@ -1,45 +1,11 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { QRCodeResult, QRTypeInfo } from '@/types/qr-types';
-import { Focus, Camera } from 'lucide-react';
-
-// QR Types configuration with regex patterns for detection
-const qrTypes: Record<string, QRTypeInfo> = {
-  url: {
-    type: 'url',
-    regex: /^(https?:\/\/)?([\w\d-]+\.)+[\w\d]{2,}(\/.*)?$/i,
-  },
-  wifi: {
-    type: 'wifi',
-    regex: /^WIFI:/i,
-  },
-  email: {
-    type: 'email',
-    regex: /^mailto:|^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$/i,
-  },
-  phone: {
-    type: 'phone',
-    regex: /^tel:|^(\+\d{1,3})?[-. ]?\(?[\d\s]{3,}\)?[-. ]?[\d\s]{3,}$/i,
-  },
-  sms: {
-    type: 'sms',
-    regex: /^sms:/i,
-  },
-  geo: {
-    type: 'geo',
-    regex: /^geo:/i,
-  },
-  calendar: {
-    type: 'calendar',
-    regex: /^BEGIN:VEVENT/i,
-  },
-  text: {
-    type: 'text',
-    regex: /.*/,
-  },
-};
+import { QRCodeResult } from '@/types/qr-types';
+import { detectQRType } from '@/lib/qr-detection';
+import { scannerConfig } from '@/lib/scanner-config';
+import { Focus } from 'lucide-react';
 
 interface CameraScannerProps {
   isScanning: boolean;
@@ -49,59 +15,109 @@ interface CameraScannerProps {
   currentCamera: string;
   setCurrentCamera: (cameraId: string) => void;
   onScanSuccess: (result: QRCodeResult) => void;
+  onCamerasLoaded?: (cameras: { id: string; label: string }[]) => void;
 }
 
 interface CameraDevice {
   id: string;
   label: string;
+  cameraType?: string;
 }
 
 export default function CameraScanner({
   isScanning,
   setIsScanning,
   continuousScan,
-  setContinuousScan,
   currentCamera,
   setCurrentCamera,
-  onScanSuccess
+  onScanSuccess,
+  onCamerasLoaded
 }: CameraScannerProps) {
-  const [availableCameras, setAvailableCameras] = useState<CameraDevice[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [hasTorch, setHasTorch] = useState<boolean>(false);
   const [flashOn, setFlashOn] = useState<boolean>(false);
-  const [isActivelyScanning, setIsActivelyScanning] = useState<boolean>(false);
   
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const readerRef = useRef<HTMLDivElement>(null);
+  const isStartingRef = useRef<boolean>(false);
+  const isStoppingRef = useRef<boolean>(false);
+  const currentCameraRef = useRef<string>(currentCamera);
+  currentCameraRef.current = currentCamera;
 
-  // Initialize scanner on component mount
-  useEffect(() => {
-    if (!scannerRef.current && readerRef.current) {
-      scannerRef.current = new Html5Qrcode('reader');
-    }
+  // Format camera labels for display
+  const formatCameraList = useCallback((cameras: Array<{ id: string; label: string }>): CameraDevice[] => {
+    let backCount = 0;
+    let frontCount = 0;
+    return cameras.map((camera, index) => {
+      let label = camera.label || '';
+      const lower = label.toLowerCase();
+      let cameraType = '';
 
-    // Load available cameras
-    loadCameras();
-
-    // Cleanup on component unmount
-    return () => {
-      if (scannerRef.current && isActivelyScanning) {
-        scannerRef.current.stop()
-          .catch(error => console.error("Error stopping scanner:", error))
-          .finally(() => setIsActivelyScanning(false));
+      if (lower.includes('back') || lower.includes('environment') || lower.includes('rear')) {
+        backCount++;
+        label = backCount > 1 ? `Back Camera ${backCount}` : 'Back Camera';
+        cameraType = 'environment';
+      } else if (lower.includes('front') || lower.includes('user') || lower.includes('facing')) {
+        frontCount++;
+        label = frontCount > 1 ? `Front Camera ${frontCount}` : 'Front Camera';
+        cameraType = 'user';
+      } else if (!label || label.trim() === '') {
+        label = `Camera ${index + 1}`;
       }
-    };
+
+      return {
+        id: camera.id,
+        label,
+        cameraType
+      };
+    });
   }, []);
 
-  // Effect to start/stop scanner when isScanning changes
-  useEffect(() => {
-    if (isScanning) {
-      startScanner();
-    } else if (scannerRef.current) {
-      stopScanner();
+  // Load available cameras
+  const loadCameras = useCallback(async () => {
+    try {
+      const cameras = await Html5Qrcode.getCameras();
+      if (cameras && cameras.length > 0) {
+        const formatted = formatCameraList(cameras);
+        if (onCamerasLoaded) {
+          onCamerasLoaded(formatted);
+        }
+
+        // Set default camera if not selected or current camera is invalid
+        if (!currentCameraRef.current || !formatted.some(c => c.id === currentCameraRef.current)) {
+          const backCamera = formatted.find(c => c.cameraType === 'environment' || c.label.toLowerCase().includes('back'));
+          const defaultCam = backCamera ? backCamera.id : formatted[0].id;
+          setCurrentCamera(defaultCam);
+        }
+        return formatted;
+      }
+    } catch (err) {
+      // Prior to user granting permission, getCameras() might return empty or fail silently.
+      // startScanner will request permissions directly.
+      console.debug("Camera enumeration note:", err);
     }
-  }, [isScanning, currentCamera]);
+    return [];
+  }, [formatCameraList, onCamerasLoaded, setCurrentCamera]);
+
+  // Check if device supports flashlight
+  const checkFlashSupport = async () => {
+    if (!scannerRef.current) return false;
+
+    try {
+      if (typeof (scannerRef.current as any).hasTorch === 'function') {
+        const torchSupported = await (scannerRef.current as any).hasTorch();
+        setHasTorch(torchSupported);
+        return torchSupported;
+      } else {
+        setHasTorch(false);
+        return false;
+      }
+    } catch {
+      setHasTorch(false);
+      return false;
+    }
+  };
 
   // Toggle flashlight
   const toggleFlash = async () => {
@@ -109,7 +125,6 @@ export default function CameraScanner({
 
     try {
       if (flashOn) {
-        // TypeScript doesn't know about the torch methods, but they exist in the library
         await (scannerRef.current as any).disableTorch();
       } else {
         await (scannerRef.current as any).enableTorch();
@@ -118,188 +133,15 @@ export default function CameraScanner({
     } catch (error) {
       console.error("Error toggling flashlight:", error);
       setError('Failed to toggle flashlight');
-      // If we get an error, assume the device doesn't actually support flash
       setHasTorch(false);
-    }
-  };
-
-  // Check if device supports flashlight
-  const checkFlashSupport = async () => {
-    if (!scannerRef.current) return false;
-
-    try {
-      // Check if hasTorch method exists before calling it
-      if (typeof (scannerRef.current as any).hasTorch === 'function') {
-        const torchSupported = await (scannerRef.current as any).hasTorch();
-        setHasTorch(torchSupported);
-        return torchSupported;
-      } else {
-        // Method doesn't exist, assume no torch support
-        setHasTorch(false);
-        return false;
-      }
-    } catch (error) {
-      console.error("Error checking flash support:", error);
-      setHasTorch(false);
-      return false;
-    }
-  };
-  
-  // Load available cameras
-  const loadCameras = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const cameras = await Html5Qrcode.getCameras();
-      
-      if (cameras && cameras.length > 0) {
-        // Format camera labels to be more user-friendly
-        const formattedCameras = cameras.map(camera => {
-          let label = camera.label || `Camera ${camera.id}`;
-          let cameraType = '';
-          
-          // Try to detect back/front camera from label
-          if (label.toLowerCase().includes('back')) {
-            label = 'Back Camera';
-            cameraType = 'environment';
-          } else if (label.toLowerCase().includes('front')) {
-            label = 'Front Camera';
-            cameraType = 'user';
-          } else if (label.toLowerCase().includes('environment')) {
-            label = 'Back Camera';
-            cameraType = 'environment';
-          } else if (label.toLowerCase().includes('user')) {
-            label = 'Front Camera';
-            cameraType = 'user';
-          }
-          
-          return {
-            id: camera.id,
-            label,
-            cameraType
-          };
-        });
-        
-        setAvailableCameras(formattedCameras);
-        
-        // If currentCamera is a facingMode like 'environment' or 'user', find a matching camera
-        if (currentCamera === 'environment' || currentCamera === 'user') {
-          const matchingCamera = formattedCameras.find(camera => 
-            camera.cameraType === currentCamera
-          );
-          
-          if (matchingCamera) {
-            setCurrentCamera(matchingCamera.id);
-          } else {
-            // Fall back to default camera selection
-            const backCamera = formattedCameras.find(camera => 
-              camera.label.toLowerCase().includes('back')
-            );
-            
-            if (backCamera) {
-              setCurrentCamera(backCamera.id);
-            } else {
-              setCurrentCamera(formattedCameras[0].id);
-            }
-          }
-        } else if (currentCamera === 'auto' || !currentCamera) {
-          // Auto selection - prefer back camera
-          const backCamera = formattedCameras.find(camera => 
-            camera.label.toLowerCase().includes('back')
-          );
-          
-          if (backCamera) {
-            setCurrentCamera(backCamera.id);
-          } else {
-            setCurrentCamera(formattedCameras[0].id);
-          }
-        } else {
-          // Check if the currentCamera exists in our available cameras
-          const cameraExists = formattedCameras.some(camera => camera.id === currentCamera);
-          if (!cameraExists) {
-            // If not, default to the first camera
-            setCurrentCamera(formattedCameras[0].id);
-          }
-        }
-      } else {
-        setError('No cameras found on your device');
-      }
-    } catch (error) {
-      console.error("Error loading cameras:", error);
-      setError('Failed to access camera. Please check permissions.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Start QR scanner
-  const startScanner = async () => {
-    if (!scannerRef.current || !currentCamera) return;
-    
-    try {
-      setLoading(true);
-      // Reset flash state when starting scanner or changing camera
-      setFlashOn(false);
-      
-      const config = { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1,
-      };
-      
-      await scannerRef.current.start(
-        currentCamera, 
-        config, 
-        handleScanSuccess,
-        handleScanFailure
-      );
-      
-      // Update scanning state after successful start
-      setIsActivelyScanning(true);
-      
-      // Check if this device/camera supports flashlight after starting
-      await checkFlashSupport();
-      
-    } catch (error) {
-      // Only log detailed errors in development
-      if (process.env.NODE_ENV === 'development') {
-        console.warn("Error starting scanner:", error);
-      }
-      setError(`Camera access error. Please check your permissions and try again.`);
-      setIsScanning(false);
-      setIsActivelyScanning(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Stop QR scanner
-  const stopScanner = async () => {
-    if (!scannerRef.current) return;
-    
-    try {
-      setLoading(true);
-      // Only attempt to stop if we believe the scanner is running
-      if (isActivelyScanning) {
-        await scannerRef.current.stop();
-        setIsActivelyScanning(false);
-      }
-    } catch (error) {
-      console.error("Error stopping scanner:", error);
-      // Even if there's an error, we're no longer in scanning state
-      setIsActivelyScanning(false);
-    } finally {
-      setLoading(false);
     }
   };
 
   // Handle successful scan
-  const handleScanSuccess = (decodedText: string, decodedResult: any) => {
+  const handleScanSuccess = (decodedText: string) => {
     const data = decodedText.trim();
     const qrType = detectQRType(data);
-    
-    // Create the result object
+
     const result: QRCodeResult = {
       id: Date.now(),
       data,
@@ -307,59 +149,133 @@ export default function CameraScanner({
       timestamp: new Date().toLocaleString(),
       typeInfo: qrType,
     };
-    
-    // Call the callback function with the result
+
     onScanSuccess(result);
-    
-    // Play success sound if supported
-    playScanSuccessSound();
-    
-    // Auto stop if not in continuous mode
+
     if (!continuousScan) {
       setIsScanning(false);
     }
   };
 
   // Handle scan failure
-  const handleScanFailure = (error: any) => {
-    // We don't need to do anything here, but function is required
-    console.debug("QR scan error (non-critical):", error);
+  const handleScanFailure = () => {
+    // Frame did not contain a QR code; ignored
   };
 
-  // Detect QR code type
-  const detectQRType = (data: string): QRTypeInfo => {
-    for (const [type, typeInfo] of Object.entries(qrTypes)) {
-      if (typeInfo.regex.test(data)) {
-        return typeInfo;
+  // Start QR scanner
+  const startScanner = async () => {
+    if (isStartingRef.current || isStoppingRef.current) return;
+
+    if (!scannerRef.current) {
+      if (readerRef.current) {
+        scannerRef.current = new Html5Qrcode('reader');
+      } else {
+        return;
       }
     }
-    return qrTypes.text;
-  };
 
-  // Play success sound
-  const playScanSuccessSound = () => {
     try {
-      // Simple beep sound using Web Audio API
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-      const audioContext = new AudioContext();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
-      
-      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
-    } catch (e) {
-      // Ignore errors - audio is not essential
+      isStartingRef.current = true;
+      setLoading(true);
+      setError(null);
+      setFlashOn(false);
+
+      // If scanner is already running, stop it first before starting
+      if (scannerRef.current.isScanning) {
+        try {
+          await scannerRef.current.stop();
+        } catch {
+          // Ignore
+        }
+      }
+
+      const config = {
+        ...scannerConfig,
+        aspectRatio: 1,
+      };
+
+      // Use specific camera deviceId if selected, otherwise fallback to facingMode 'environment'
+      const cameraConstraint = currentCameraRef.current
+        ? currentCameraRef.current
+        : { facingMode: 'environment' };
+
+      await scannerRef.current.start(
+        cameraConstraint,
+        config,
+        handleScanSuccess,
+        handleScanFailure
+      );
+
+      // Check flashlight support once camera stream is active
+      await checkFlashSupport();
+
+      // Refresh camera list now that permissions have been granted
+      await loadCameras();
+    } catch (err: any) {
+      console.warn("Error starting scanner:", err);
+      const errorMessage = (err?.message || String(err)).toLowerCase();
+      if (errorMessage.includes('permission') || errorMessage.includes('notallowederror')) {
+        setError('Camera permission was denied. Please allow camera access in your browser settings.');
+      } else if (errorMessage.includes('notreadableerror') || errorMessage.includes('in use') || errorMessage.includes('device')) {
+        setError('Camera is in use by another application or tab. Please close other camera apps and try again.');
+      } else {
+        setError('Failed to start camera. Please check permissions and try again.');
+      }
+      setIsScanning(false);
+    } finally {
+      isStartingRef.current = false;
+      setLoading(false);
     }
   };
+
+  // Stop QR scanner
+  const stopScanner = async () => {
+    if (!scannerRef.current || isStoppingRef.current) return;
+
+    try {
+      isStoppingRef.current = true;
+      setLoading(true);
+      if (scannerRef.current.isScanning) {
+        await scannerRef.current.stop();
+      }
+    } catch (err) {
+      console.debug("Error stopping scanner:", err);
+    } finally {
+      isStoppingRef.current = false;
+      setLoading(false);
+    }
+  };
+
+  // Initialize scanner on mount
+  useEffect(() => {
+    if (!scannerRef.current && readerRef.current) {
+      scannerRef.current = new Html5Qrcode('reader');
+    }
+
+    loadCameras();
+
+    return () => {
+      if (scannerRef.current) {
+        if (scannerRef.current.isScanning) {
+          scannerRef.current.stop().catch(() => {});
+        }
+        try {
+          scannerRef.current.clear();
+        } catch {
+          // Ignore
+        }
+      }
+    };
+  }, [loadCameras]);
+
+  // Effect to start/stop scanner when isScanning or currentCamera changes
+  useEffect(() => {
+    if (isScanning) {
+      startScanner();
+    } else {
+      stopScanner();
+    }
+  }, [isScanning, currentCamera]);
 
   return (
     <div className="relative w-full">
@@ -410,7 +326,7 @@ export default function CameraScanner({
               </div>
               <p className="text-base sm:text-lg font-medium mb-1 sm:mb-2 text-foreground">Position QR Code Here</p>
               <p className="text-xs sm:text-sm max-w-xs text-center text-muted-foreground">
-              Click the Start Scan button to activate the camera
+                Click the Start Scan button to activate the camera
               </p>
             </div>
           </div>
@@ -460,19 +376,22 @@ export default function CameraScanner({
   );
 }
 
-
-// This will be added dynamically in the component and doesn't require a style tag
+// Global scan-line style
 if (typeof document !== 'undefined') {
-  const styleTag = document.createElement('style');
-  styleTag.innerHTML = `
-    @keyframes scan-line {
-      0% { top: 0%; }
-      50% { top: calc(100% - 4px); }
-      100% { top: 0%; }
-    }
-    .animate-scan-line {
-      animation: scan-line 2s infinite ease-in-out;
-    }
-  `;
-  document.head.appendChild(styleTag);
+  const styleId = 'yoqr-scanner-styles';
+  if (!document.getElementById(styleId)) {
+    const styleTag = document.createElement('style');
+    styleTag.id = styleId;
+    styleTag.innerHTML = `
+      @keyframes scan-line {
+        0% { top: 0%; }
+        50% { top: calc(100% - 4px); }
+        100% { top: 0%; }
+      }
+      .animate-scan-line {
+        animation: scan-line 2s infinite ease-in-out;
+      }
+    `;
+    document.head.appendChild(styleTag);
+  }
 }
